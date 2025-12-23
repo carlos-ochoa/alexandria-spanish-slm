@@ -1,0 +1,11 @@
+[project]
+name = "alexandria-spanish-slm"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "tqdm>=4.67.1",
+    "wikipedia>=1.4.0",
+    "wikipedia-api>=0.8.1",
+]

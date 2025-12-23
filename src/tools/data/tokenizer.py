@@ -1,0 +1,119 @@
+"""Definition for the Alexandria Tokenizer. Custom implementation of BPE
+"""
+
+from collections import Counter
+from typing import Tuple
+from tqdm import tqdm
+
+class AlexandriaTokenizer:
+
+    def __init__(self):
+        self.vocab = {}
+        self.vocab_str = {}
+        self.stats = {}
+        #self.max_merges = 23742
+        self.max_merges = 10
+        self.init_vocab()
+
+    def init_vocab(self) -> None:
+        for i in range(256):
+            self.vocab[i] = bytes([i])
+            try:
+                self.vocab_str[i] = bytes([i]).decode('ascii')
+                if i == 32:
+                    self.vocab_str[i] = '·'
+                elif i < 32 or i == 127:
+                    self.vocab_str[i] = f'<0x{i:02X}>'
+            except:
+                self.vocab_str[i] = f'<0x{i:02X}>'
+        self.vocab[256] = b'<UNK>'
+        self.vocab[257] = b'<EOS>'
+        self.vocab_str[256] = '<UNK>'
+        self.vocab_str[257] = '<EOS>'
+
+    def _text_to_bytes(self, corpus : list) -> list:
+        bytes_corpus = []
+        for text in corpus:
+            bytes_corpus.append(bytes(text, 'utf-8'))
+        return bytes_corpus
+
+    def get_pairs(self, bytes_text : str) -> dict:
+        # Naive implementation
+        pairs = []
+        i = 0
+        while i < len(bytes_text)-1:
+            pairs.append((bytes_text[i], bytes_text[i+1]))
+            i += 1
+        counter_pairs = Counter(pairs)
+        return counter_pairs
+    
+    def update_vocab(self, pair : Tuple[int], token_id : int) -> None:
+        new_token = self.vocab[pair[0]] + self.vocab[pair[1]]
+        self.vocab[token_id] = new_token
+        self.vocab_str[token_id] = self.vocab[token_id].decode('utf-8')
+
+    def update_token_in_corpus(self, corpus : list, token : Tuple[int], new_token : int) -> list:
+        # Naive implementation
+        i = 0
+        new_text = []
+        new_corpus = []
+        for text in corpus:
+            while i < len(text)-1:
+                if token[0] == text[i] and token[1] == text[i+1]:
+                    new_text = list(text)[:i] + [new_token] + list(text)[i+2:]
+                i += 1
+            if new_text:
+                new_corpus.append(new_text)
+            else:
+                new_corpus.append(text)
+            i = 0
+        return new_corpus
+        
+    def build_vocab(self, corpus : list) -> None:
+        """A function to tokenize the corpus or text passed
+
+        Args:
+            corpus (dict): The text data to tokenize. Expected a list of articles.
+        """
+        pbar = tqdm(total=self.max_merges)
+        total_merges = 0
+        current_id = 258
+        corpus = self._text_to_bytes(corpus)
+        while total_merges < self.max_merges:
+            total_pairs = Counter()
+            for text in corpus:
+                pairs_in_article = self.get_pairs(text)
+                total_pairs.update(pairs_in_article)
+            most_common_pair = total_pairs.most_common(1)[0]
+            self.update_vocab(most_common_pair[0], current_id)
+            corpus = self.update_token_in_corpus(corpus, most_common_pair[0], current_id)
+            current_id += 1
+            total_merges += 1
+            pbar.update(1)
+
+    def visualize_tokenization(self):
+        pass
+
+    def tokenize(self):
+        pass
+
+
+t = AlexandriaTokenizer()
+t.build_vocab(
+    [
+        "Este es un texto del ático.",
+        "Aquí estoy probando algún texto más, para probar",
+        "Aunque no encontremos el contexto, aquí está."
+    ]
+)
+print(t.vocab_str)
+
+# Validar que el most_common token no sea uno que ya exista y si sí, ir a por el siguiente
+
+# Trabajar en visualizacion para el debugging
+
+# Add most frequent merges in history for traceability
+
+# Complete tokenize function
+
+    
