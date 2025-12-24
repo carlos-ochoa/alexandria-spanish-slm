@@ -2,7 +2,7 @@
 """
 
 from collections import Counter
-from typing import Tuple
+from typing import Tuple, List, Dict
 from tqdm import tqdm
 
 class AlexandriaTokenizer:
@@ -12,6 +12,7 @@ class AlexandriaTokenizer:
         self.vocab_str = {}
         self.stats = {}
         #self.max_merges = 23742
+        self.merges = {}
         self.max_merges = 10
         self.init_vocab()
 
@@ -34,7 +35,7 @@ class AlexandriaTokenizer:
     def _text_to_bytes(self, corpus : list) -> list:
         bytes_corpus = []
         for text in corpus:
-            bytes_corpus.append(bytes(text, 'utf-8'))
+            bytes_corpus.append(list(bytes(text, 'utf-8')))
         return bytes_corpus
 
     def get_pairs(self, bytes_text : str) -> dict:
@@ -51,6 +52,7 @@ class AlexandriaTokenizer:
         new_token = self.vocab[pair[0]] + self.vocab[pair[1]]
         self.vocab[token_id] = new_token
         self.vocab_str[token_id] = self.vocab[token_id].decode('utf-8')
+        self.merges[pair] = token_id
 
     def update_token_in_corpus(self, corpus : list, token : Tuple[int], new_token : int) -> list:
         # Naive implementation
@@ -90,23 +92,75 @@ class AlexandriaTokenizer:
             current_id += 1
             total_merges += 1
             pbar.update(1)
+        #print(corpus)
 
-    def visualize_tokenization(self):
-        pass
+    def find_merges(self, text : List[int]) -> dict:
+        i = 0
+        merges = {}
+        while i < len(text)-1:
+            key = (text[i], text[i+1])
+            if key in list(self.merges.keys()):
+                merges[key] = self.merges[key]
+            i += 1
+        merges = Counter(merges)
+        return merges
+    
+    def replace_merges_in_text(self, text : List[int], merges : Dict[Tuple[int, int],int]) -> List[int]:
+        i = 0
+        new_text = []
+        for (merge,token) in merges.items():
+            while i < len(text)-1:
+                key = (text[i], text[i+1])
+                if key == merge:
+                    new_text = list(text)[:i] + [token] + list(text)[i+2:]
+                i += 1
+        return new_text
 
-    def tokenize(self):
-        pass
+    def visualize_tokenization(self, tokens : List[int]) -> str:
+        text = ""
+        for token in tokens:
+            text = text + "|" + self.vocab_str[token]
+        return text
+    
+    def __tokenize_str(self, text : str) -> List[int]:
+        text = self._text_to_bytes([text])[0]
+        merges = self.find_merges(text)
+        while merges:
+            text = self.replace_merges_in_text(text, merges)
+            merges = self.find_merges(text)
+        return text
+
+    def tokenize(self, text : str | List[str]) -> List[int]:
+        tokenized_text = []
+        if isinstance(text, str):
+            tokenized_text = self.__tokenize_str(text)
+        elif isinstance(text, List):
+            for t in text:
+                tokenized_text.append(self.__tokenize_str(t))
+        return tokenized_text
 
 
 t = AlexandriaTokenizer()
 t.build_vocab(
     [
-        "Este es un texto del ático.",
+        "Este es un texto del ático.<EOS>",
         "Aquí estoy probando algún texto más, para probar",
         "Aunque no encontremos el contexto, aquí está."
     ]
 )
-print(t.vocab_str)
+#print(t.vocab_str)
+#print(t.merges)
+
+print(t.merges)
+#tokens = t.tokenize("Este no se trata de un pretexto")
+tokens = t.tokenize(["Este no se trata de un pretexto", "contexto"])
+print(tokens)
+for tokenized_text in tokens:
+    text = t.visualize_tokenization(tokenized_text)
+    print(text)
+
+print('\n')
+#print(t.vocab_str)
 
 # Validar que el most_common token no sea uno que ya exista y si sí, ir a por el siguiente
 
@@ -115,5 +169,12 @@ print(t.vocab_str)
 # Add most frequent merges in history for traceability
 
 # Complete tokenize function
+
+# Me falta un método decode para convertir la lista de tokens a texto legible
+
+# Compression en mi tokenizer
+
+# Greedy + indice ordenado en tokenización
+# Multiples pasadas para generar la versión tokenizada final
 
     
