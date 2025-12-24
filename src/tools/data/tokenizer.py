@@ -14,6 +14,7 @@ class AlexandriaTokenizer:
         #self.max_merges = 23742
         self.merges = {}
         self.max_merges = 10
+        self.most_frequent_merges = Counter()
         self.init_vocab()
 
     def init_vocab(self) -> None:
@@ -49,10 +50,11 @@ class AlexandriaTokenizer:
         return counter_pairs
     
     def update_vocab(self, pair : Tuple[int], token_id : int) -> None:
-        new_token = self.vocab[pair[0]] + self.vocab[pair[1]]
+        new_token = self.vocab[pair[0][0]] + self.vocab[pair[0][1]]
         self.vocab[token_id] = new_token
         self.vocab_str[token_id] = self.vocab[token_id].decode('utf-8')
-        self.merges[pair] = token_id
+        self.merges[pair[0]] = token_id
+        self.most_frequent_merges[pair] = pair[1]
 
     def update_token_in_corpus(self, corpus : list, token : Tuple[int], new_token : int) -> list:
         # Naive implementation
@@ -87,7 +89,7 @@ class AlexandriaTokenizer:
                 pairs_in_article = self.get_pairs(text)
                 total_pairs.update(pairs_in_article)
             most_common_pair = total_pairs.most_common(1)[0]
-            self.update_vocab(most_common_pair[0], current_id)
+            self.update_vocab(most_common_pair, current_id)
             corpus = self.update_token_in_corpus(corpus, most_common_pair[0], current_id)
             current_id += 1
             total_merges += 1
@@ -137,7 +139,15 @@ class AlexandriaTokenizer:
         elif isinstance(text, List):
             for t in text:
                 tokenized_text.append(self.__tokenize_str(t))
+        #else:
+        #    raise Exception
         return tokenized_text
+    
+    def decode(self, tokenized_text : List[int] | List[List[int]]) -> str | List[str]:
+        text = ""
+        for token in tokenized_text:
+            text = text + self.vocab[token].decode('utf-8')
+        return text
 
 
 t = AlexandriaTokenizer()
@@ -158,23 +168,14 @@ print(tokens)
 for tokenized_text in tokens:
     text = t.visualize_tokenization(tokenized_text)
     print(text)
-
+print(t.most_frequent_merges)
 print('\n')
 #print(t.vocab_str)
 
-# Validar que el most_common token no sea uno que ya exista y si sí, ir a por el siguiente
-
-# Trabajar en visualizacion para el debugging
-
-# Add most frequent merges in history for traceability
-
-# Complete tokenize function
+print(t.decode(tokens[0]))
 
 # Me falta un método decode para convertir la lista de tokens a texto legible
 
 # Compression en mi tokenizer
 
-# Greedy + indice ordenado en tokenización
-# Multiples pasadas para generar la versión tokenizada final
-
-    
+# escribir pruebas unitarias
