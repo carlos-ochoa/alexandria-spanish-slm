@@ -21,6 +21,22 @@ tokenizer.build_vocab(tokenizer_ds)
 
 tokenized_dataset = tokenizer.tokenize(ds)
 
+compression_ratio_char_level = 0
+for original_text, tokenized_text in zip(tokenizer_ds, tokenized_dataset):
+    compression_ratio_char_level += len(original_text) / len(tokenized_text)
+compression_ratio_char_level /= len(tokenized_dataset)
+
+compression_ratio_byte_level = 0
+for original_text, tokenized_text in zip(tokenizer_ds, tokenized_dataset):
+    compression_ratio_byte_level += len(original_text.encode('utf-8')) / len(tokenized_text)
+compression_ratio_byte_level /= len(tokenized_dataset)
+
+print(compression_ratio_char_level)
+print(compression_ratio_byte_level)
+
+# Calculate the compression reason for the tokenizer
+# Visualize the top 20 most seen tokens for my tokenizer
+
 
 
 
