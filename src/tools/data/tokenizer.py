@@ -131,11 +131,16 @@ class AlexandriaTokenizer:
         while merges:
             text = self.replace_merges_in_text(text, merges)
             merges = self.find_merges(text)
-        text.append(257)
         return text
+    
+    def __add_eos_token(self, text : List[int]) -> List[int]:
+        # This method is only for model training purposes
+        return text.append(257)
 
     def tokenize(self, text : str | List[str]) -> List[int]:
         tokenized_text = []
+        if len(text) == 0:
+            return tokenized_text
         if isinstance(text, str):
             tokenized_text = self.__tokenize_str(text)
         elif isinstance(text, List):
