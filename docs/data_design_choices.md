@@ -57,9 +57,21 @@ Wikipedia articles.
 Additional control tokens (e.g., `<BOS>`, style markers, task prefixes) 
 could be introduced for fine-tuning on specific tasks.
 
+### Features for AlexandriaTokenizer 1.0
+A first implementation for my custom BPE tokenizer implements the BPE algorithm using naive approaches that fulfill the expectations on tokenization of small corpuses. However, it cannot handle efficiently the intended production set for this exercise. Hence, I'm documenting the limitations for v1.0 and indicating the next steps for a v2.0
+
+**Limitations**
+- Compute Complexity: build_vocab -> O(max_merges)
+get_pairs -> O(max(text))
+update_token_in_corpus -> O(n*m)
+tokenize -> O(n*m*max(merges))
+- As the tokenizer builds the vocabulary based only in Spanish text from Wikipedia, it is expected that it will work with worse performance on tokenization of text sources aside from this one, such as coding files, informal conversations, etc. This behavior is expected and it is not intended to be mitigated.
+- The tokenization performance in other languages apart from Spanish is expected to be low, as the compression rates would be smaller and posterior language generation process will be more expensive. Alexandria's Tokenizer will not be enhanced to learn vocabulary from other languages. This behavior will not be mitigated in future versions.
+
 ## Preprocessing
 
 1. Normalize white spaces in the text
-2. Add special token <EOS> at the end of each article
-3. 
+2. Run the tokenization with AlexandriaTokenizer
 
+Document the limitations on the tokenizer (and my thoughts on specialized ones for coding vs a generalist one)
+Algorithm Complexity
