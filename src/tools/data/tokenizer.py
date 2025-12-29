@@ -93,6 +93,8 @@ class AlexandriaTokenizer:
                 corpus = self.update_token_in_corpus(corpus, most_common_pair[0], current_id)
                 current_id += 1
                 total_merges += 1
+            else:
+                break
             pbar.update(1)
 
     def find_merges(self, text : List[int]) -> dict:
@@ -129,6 +131,7 @@ class AlexandriaTokenizer:
         while merges:
             text = self.replace_merges_in_text(text, merges)
             merges = self.find_merges(text)
+        text.append(257)
         return text
 
     def tokenize(self, text : str | List[str]) -> List[int]:
@@ -146,15 +149,16 @@ class AlexandriaTokenizer:
             text = text + self.vocab[token].decode('utf-8')
         return text
 
-"""
-t = AlexandriaTokenizer()
-t.build_vocab(
-    [
-        "Este es un texto del ático.",
-        "Aquí estoy probando algún texto más, para probar",
-        "Aunque no encontremos el contexto, aquí está."
-    ]
-)
+
+t = AlexandriaTokenizer(max_merges=10)
+#t.build_vocab(
+#    [
+#        "Este es un texto del ático.",
+#        "Aquí estoy probando algún texto más, para probar",
+#        "Aunque no encontremos el contexto, aquí está."
+#    ]
+#)
+t.build_vocab(["hola mundo", "hola amigo"])
 tokens = t.tokenize(["Este no se trata de un pretexto", "contexto"])
 print(tokens)
 for tokenized_text in tokens:
@@ -162,7 +166,7 @@ for tokenized_text in tokens:
     print(text)
 print(t.most_frequent_merges)
 print(t.decode(tokens[0]))
-"""
+
 # Compression en mi tokenizer
 
 # escribir pruebas unitarias
