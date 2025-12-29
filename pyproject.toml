@@ -5,7 +5,16 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "datasets==4.4.2",
+    "pytest>=9.0.2",
     "tqdm>=4.67.1",
     "wikipedia>=1.4.0",
     "wikipedia-api>=0.8.1",
 ]
+
+[tool.pytest.ini_options]
+pythonpath = "."
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]

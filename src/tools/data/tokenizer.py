@@ -7,13 +7,12 @@ from tqdm import tqdm
 
 class AlexandriaTokenizer:
 
-    def __init__(self):
+    def __init__(self, max_merges : int = 23742):
         self.vocab = {}
         self.vocab_str = {}
         self.stats = {}
-        #self.max_merges = 23742
+        self.max_merges = max_merges
         self.merges = {}
-        self.max_merges = 10
         self.most_frequent_merges = Counter()
         self.init_vocab()
 
@@ -88,13 +87,13 @@ class AlexandriaTokenizer:
             for text in corpus:
                 pairs_in_article = self.get_pairs(text)
                 total_pairs.update(pairs_in_article)
-            most_common_pair = total_pairs.most_common(1)[0]
-            self.update_vocab(most_common_pair, current_id)
-            corpus = self.update_token_in_corpus(corpus, most_common_pair[0], current_id)
-            current_id += 1
-            total_merges += 1
+            if total_pairs:
+                most_common_pair = total_pairs.most_common(1)[0]
+                self.update_vocab(most_common_pair, current_id)
+                corpus = self.update_token_in_corpus(corpus, most_common_pair[0], current_id)
+                current_id += 1
+                total_merges += 1
             pbar.update(1)
-        #print(corpus)
 
     def find_merges(self, text : List[int]) -> dict:
         i = 0
@@ -139,8 +138,6 @@ class AlexandriaTokenizer:
         elif isinstance(text, List):
             for t in text:
                 tokenized_text.append(self.__tokenize_str(t))
-        #else:
-        #    raise Exception
         return tokenized_text
     
     def decode(self, tokenized_text : List[int] | List[List[int]]) -> str | List[str]:
@@ -149,33 +146,23 @@ class AlexandriaTokenizer:
             text = text + self.vocab[token].decode('utf-8')
         return text
 
-
+"""
 t = AlexandriaTokenizer()
 t.build_vocab(
     [
-        "Este es un texto del ático.<EOS>",
+        "Este es un texto del ático.",
         "Aquí estoy probando algún texto más, para probar",
         "Aunque no encontremos el contexto, aquí está."
     ]
 )
-#print(t.vocab_str)
-#print(t.merges)
-
-print(t.merges)
-#tokens = t.tokenize("Este no se trata de un pretexto")
 tokens = t.tokenize(["Este no se trata de un pretexto", "contexto"])
 print(tokens)
 for tokenized_text in tokens:
     text = t.visualize_tokenization(tokenized_text)
     print(text)
 print(t.most_frequent_merges)
-print('\n')
-#print(t.vocab_str)
-
 print(t.decode(tokens[0]))
-
-# Me falta un método decode para convertir la lista de tokens a texto legible
-
+"""
 # Compression en mi tokenizer
 
 # escribir pruebas unitarias
