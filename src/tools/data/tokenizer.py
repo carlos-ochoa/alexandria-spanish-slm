@@ -32,13 +32,13 @@ class AlexandriaTokenizer:
             "vocab_str": self.vocab_str,
             "merges": self.merges,
         }
-        with open("tokenizer.json", "w") as f:
+        with open("assets/tokenizer.json", "w") as f:
             json.dump(save_format, f)
 
     def load_tokenizer(self) -> None:
         """Loads vocab and metadata from previous execution
         """
-        with open("tokenizer.json", "r") as f:
+        with open("assets/tokenizer.json", "r") as f:
             load_format = json.load(f)
         self.vocab = load_format["vocab"]
         self.vocab_str = load_format["vocab_str"]
