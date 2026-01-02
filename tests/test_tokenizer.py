@@ -9,13 +9,13 @@ from src.tools.data.tokenizer import AlexandriaTokenizer
 @pytest.fixture
 def tokenizer():
     """Fixture providing a fresh AlexandriaTokenizer instance."""
-    return AlexandriaTokenizer(max_merges=10)
+    return AlexandriaTokenizer(max_merges=10, load_tokenizer=False)
 
 
 @pytest.fixture
 def trained_tokenizer():
     """Fixture providing a trained AlexandriaTokenizer instance."""
-    tok = AlexandriaTokenizer(max_merges=5)
+    tok = AlexandriaTokenizer(max_merges=5, load_tokenizer=False)
     tok.build_vocab([
         "hola mundo",
         "hola amigo",
@@ -28,15 +28,15 @@ class TestAlexandriaTokenizer:
 
     def test_init_default_max_merges(self):
         """Test tokenizer initialization with default max_merges."""
-        tokenizer = AlexandriaTokenizer()
-        assert tokenizer.max_merges == 23742
+        tokenizer = AlexandriaTokenizer(load_tokenizer=False)
+        assert tokenizer.max_merges == 8000
         assert isinstance(tokenizer.vocab, dict)
         assert isinstance(tokenizer.merges, dict)
         assert isinstance(tokenizer.most_frequent_merges, Counter)
 
     def test_init_custom_max_merges(self):
         """Test tokenizer initialization with custom max_merges."""
-        tokenizer = AlexandriaTokenizer(max_merges=100)
+        tokenizer = AlexandriaTokenizer(max_merges=100, load_tokenizer=False)
         assert tokenizer.max_merges == 100
 
     def test_init_vocab_base_tokens(self, tokenizer):
@@ -92,28 +92,29 @@ class TestAlexandriaTokenizer:
     def test_get_pairs_basic(self, tokenizer):
         """Test getting consecutive pairs from byte sequence."""
         bytes_text = [104, 111, 108, 97]  # "hola"
-        pairs = tokenizer.get_pairs(bytes_text)
-        assert isinstance(pairs, Counter)
-        assert pairs[(104, 111)] == 1  # 'h', 'o'
-        assert pairs[(111, 108)] == 1  # 'o', 'l'
-        assert pairs[(108, 97)] == 1   # 'l', 'a'
+        pairs = tokenizer._get_pairs(bytes_text)
+        assert isinstance(pairs, list)
+        assert (104, 111) in pairs  # 'h', 'o'
+        assert (111, 108) in pairs  # 'o', 'l'
+        assert (108, 97) in pairs   # 'l', 'a'
+        assert len(pairs) == 3
 
     def test_get_pairs_repeated(self, tokenizer):
         """Test getting pairs with repetitions."""
         bytes_text = [97, 97, 97]  # "aaa"
-        pairs = tokenizer.get_pairs(bytes_text)
-        assert pairs[(97, 97)] == 2  # 'a', 'a' appears twice
+        pairs = tokenizer._get_pairs(bytes_text)
+        assert pairs.count((97, 97)) == 2  # 'a', 'a' appears twice
 
     def test_get_pairs_single_byte(self, tokenizer):
         """Test getting pairs from single byte (should return empty)."""
         bytes_text = [104]
-        pairs = tokenizer.get_pairs(bytes_text)
+        pairs = tokenizer._get_pairs(bytes_text)
         assert len(pairs) == 0
 
     def test_get_pairs_empty(self, tokenizer):
         """Test getting pairs from empty sequence."""
         bytes_text = []
-        pairs = tokenizer.get_pairs(bytes_text)
+        pairs = tokenizer._get_pairs(bytes_text)
         assert len(pairs) == 0
 
     def test_update_vocab(self, tokenizer):
@@ -122,7 +123,7 @@ class TestAlexandriaTokenizer:
         pair = ((104, 111), 5)  # pair and its count
         token_id = 258
 
-        tokenizer.update_vocab(pair, token_id)
+        tokenizer._update_vocab(pair, token_id)
 
         assert token_id in tokenizer.vocab
         assert tokenizer.vocab[token_id] == b'ho'
@@ -136,7 +137,7 @@ class TestAlexandriaTokenizer:
         token = (104, 111)  # 'h', 'o'
         new_token = 258
 
-        result = tokenizer.update_token_in_corpus(corpus, token, new_token)
+        result = tokenizer._update_token_in_corpus(corpus, token, new_token)
 
         # Should replace (104, 111) with 258
         assert len(result) == 1
@@ -148,11 +149,11 @@ class TestAlexandriaTokenizer:
         token = (104, 111)  # 'h', 'o'
         new_token = 258
 
-        result = tokenizer.update_token_in_corpus(corpus, token, new_token)
+        result = tokenizer._update_token_in_corpus(corpus, token, new_token)
 
-        # Should replace first occurrence
+        # Should replace all occurrences
         assert len(result) == 1
-        assert 258 in result[0]
+        assert result[0] == [258, 258]
 
     def test_update_token_in_corpus_no_match(self, tokenizer):
         """Test update when token doesn't exist in corpus."""
@@ -160,7 +161,7 @@ class TestAlexandriaTokenizer:
         token = (97, 97)  # 'a', 'a'
         new_token = 258
 
-        result = tokenizer.update_token_in_corpus(corpus, token, new_token)
+        result = tokenizer._update_token_in_corpus(corpus, token, new_token)
 
         # Should remain unchanged
         assert result == corpus
@@ -176,7 +177,7 @@ class TestAlexandriaTokenizer:
 
     def test_build_vocab_respects_max_merges(self):
         """Test that build_vocab respects max_merges limit."""
-        tokenizer = AlexandriaTokenizer(max_merges=3)
+        tokenizer = AlexandriaTokenizer(max_merges=3, load_tokenizer=False)
         corpus = ["hola mundo mundo mundo"]
 
         tokenizer.build_vocab(corpus)
@@ -191,49 +192,52 @@ class TestAlexandriaTokenizer:
         tokenizer.merges[(104, 111)] = 258  # 'h', 'o' -> 258
 
         text = [104, 111, 108, 97]  # "hola"
-        merges = tokenizer.find_merges(text)
+        merge = tokenizer._find_merges(text)
 
-        assert isinstance(merges, Counter)
-        assert (104, 111) in merges
+        assert merge is not None
+        assert merge[0] == (104, 111)
+        assert merge[1] == 258
 
     def test_find_merges_no_matches(self, tokenizer):
         """Test finding merges when none exist."""
         text = [104, 111, 108, 97]  # "hola"
-        merges = tokenizer.find_merges(text)
+        merge = tokenizer._find_merges(text)
 
-        assert len(merges) == 0
+        assert merge is None
 
     def test_find_merges_multiple(self, tokenizer):
-        """Test finding multiple merges in text."""
-        tokenizer.merges[(104, 111)] = 258  # 'h', 'o'
-        tokenizer.merges[(108, 97)] = 259   # 'l', 'a'
+        """Test finding earliest merge when multiple exist."""
+        tokenizer.merges[(104, 111)] = 258  # 'h', 'o' - later merge
+        tokenizer.merges[(108, 97)] = 259   # 'l', 'a' - even later merge
 
         text = [104, 111, 108, 97]  # "hola"
-        merges = tokenizer.find_merges(text)
+        merge = tokenizer._find_merges(text)
 
-        assert len(merges) == 2
-        assert (104, 111) in merges
-        assert (108, 97) in merges
+        # Should return the earliest merge (lowest token id)
+        assert merge is not None
+        assert merge[0] == (104, 111)
+        assert merge[1] == 258
 
     def test_replace_merges_in_text(self, tokenizer):
         """Test replacing merges in text."""
         text = [104, 111, 108, 97]  # "hola"
-        merges = {(104, 111): 258}
+        merge = ((104, 111), 258)
 
-        result = tokenizer.replace_merges_in_text(text, merges)
+        result = tokenizer._replace_merges_in_text(text, merge)
 
         assert 258 in result
         assert len(result) < len(text)
+        assert result == [258, 108, 97]
 
-    def test_replace_merges_in_text_empty_merges(self, tokenizer):
-        """Test replace with no merges."""
+    def test_replace_merges_in_text_no_match(self, tokenizer):
+        """Test replace when merge doesn't exist in text."""
         text = [104, 111, 108, 97]
-        merges = {}
+        merge = ((97, 97), 258)
 
-        result = tokenizer.replace_merges_in_text(text, merges)
+        result = tokenizer._replace_merges_in_text(text, merge)
 
-        # Should return empty list when no merges
-        assert result == []
+        # Should return text unchanged
+        assert result == text
 
     def test_visualize_tokenization_basic(self, tokenizer):
         """Test visualization of tokens."""
@@ -341,7 +345,7 @@ class TestAlexandriaTokenizer:
 
     def test_vocab_consistency_after_training(self):
         """Test that vocabulary remains consistent after training."""
-        tokenizer = AlexandriaTokenizer(max_merges=5)
+        tokenizer = AlexandriaTokenizer(max_merges=5, load_tokenizer=False)
 
         vocab_size_before = len(tokenizer.vocab)
 
@@ -356,10 +360,10 @@ class TestAlexandriaTokenizer:
         """Test that the same corpus produces the same merges."""
         corpus = ["hola mundo", "hola amigo"]
 
-        tokenizer1 = AlexandriaTokenizer(max_merges=3)
+        tokenizer1 = AlexandriaTokenizer(max_merges=3, load_tokenizer=False)
         tokenizer1.build_vocab(corpus)
 
-        tokenizer2 = AlexandriaTokenizer(max_merges=3)
+        tokenizer2 = AlexandriaTokenizer(max_merges=3, load_tokenizer=False)
         tokenizer2.build_vocab(corpus)
 
         assert tokenizer1.merges == tokenizer2.merges
