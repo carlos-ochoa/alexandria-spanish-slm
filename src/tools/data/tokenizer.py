@@ -22,17 +22,15 @@ class AlexandriaTokenizer:
             self.load_tokenizer()
         else:
             self.init_vocab()
-            self.save_tokenizer()
 
     def save_tokenizer(self) -> None:
         """Saves the tokenizer vocab and other metadata to basic json structure
         """
         save_format = {
+            "max_merges": self.max_merges,
             "vocab": self.vocab,
             "vocab_str": self.vocab_str,
-            "max_merges": self.max_merges,
             "merges": self.merges,
-            "most_frequent_merges": self.most_frequent_merges
         }
         with open("tokenizer.json", "w") as f:
             json.dump(save_format, f)
@@ -46,7 +44,6 @@ class AlexandriaTokenizer:
         self.vocab_str = load_format["vocab_str"]
         self.max_merges = load_format["max_merges"]
         self.merges = load_format["merges"]
-        self.most_frequent_merges = load_format["most_frequent_merges"]
 
     def init_vocab(self) -> None:
         """Inits the first 258 tokens of the vocabulary
@@ -160,6 +157,7 @@ class AlexandriaTokenizer:
             else:
                 break
             pbar.update(1)
+        self.save_tokenizer()
 
     def _find_merges(self, text : List[int]) -> Tuple[Tuple, int]:
         """Finds the possible merges appliable to the text. Returns only
