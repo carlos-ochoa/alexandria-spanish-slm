@@ -75,3 +75,4 @@ tokenize -> O(n*m*max(merges))
 
 Document the limitations on the tokenizer (and my thoughts on specialized ones for coding vs a generalist one)
 Algorithm Complexity
+Mejoras en la tasa de compresión del tokenizador nos permiten aprovechar mejor la ventana de contexto del modelo, más info con menos tokens
