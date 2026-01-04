@@ -68,9 +68,11 @@ A first implementation for my custom BPE tokenizer implements the BPE algorithm 
 
 ### Performance
 
-**Compression rate:**
-- 4.04 against character-level tokenization
-- 4.14 against byte-level tokenization
+**Compression Ratios**
+| Corpus | Tokens | Char-level | Byte-level |
+|--------|--------|------------|------------|
+| Dev set | 300k | 4.04x | 4.14x |
+| Language Model train set evaluation | 4.2M | 3.50x | 3.58x |
 
 These numbers are achieved under evaluation on unseen data for the tokenizer from Wikipedia's Spanish articles. It is expected that tokenizing text from other sources such as informal chatting, webs, etc. Perform worse even in Spanish. 
 It is also expected to have a lower compression rate in other languages.
