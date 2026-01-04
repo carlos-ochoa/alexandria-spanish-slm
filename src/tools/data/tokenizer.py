@@ -4,7 +4,7 @@
 from collections import Counter
 from typing import Tuple, List, Dict
 from tqdm import tqdm
-import time
+import ast
 import json
 
 
@@ -28,9 +28,9 @@ class AlexandriaTokenizer:
         """
         save_format = {
             "max_merges": self.max_merges,
-            "vocab": self.vocab,
+            #"vocab": self.vocab,
             "vocab_str": self.vocab_str,
-            "merges": self.merges,
+            "merges": {str(k) : v for k,v in self.merges.items()},
         }
         with open("assets/tokenizer.json", "w") as f:
             json.dump(save_format, f)
@@ -40,10 +40,11 @@ class AlexandriaTokenizer:
         """
         with open("assets/tokenizer.json", "r") as f:
             load_format = json.load(f)
-        self.vocab = load_format["vocab"]
         self.vocab_str = load_format["vocab_str"]
-        self.max_merges = load_format["max_merges"]
+        self.max_merges = {ast.literal_eval(k) : v for k,v in load_format["max_merges"]}
         self.merges = load_format["merges"]
+        self.vocab = {k: v.encode('utf-8') if isinstance(v, str) else v 
+                     for k, v in self.vocab_str.items()}
 
     def init_vocab(self) -> None:
         """Inits the first 258 tokens of the vocabulary
@@ -157,6 +158,7 @@ class AlexandriaTokenizer:
             else:
                 break
             pbar.update(1)
+        print(self.merges)
         self.save_tokenizer()
 
     def _find_merges(self, text : List[int]) -> Tuple[Tuple, int]:

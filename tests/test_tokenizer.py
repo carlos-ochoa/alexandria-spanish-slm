@@ -3,6 +3,7 @@
 
 import pytest
 from collections import Counter
+from unittest.mock import patch, MagicMock
 from src.tools.data.tokenizer import AlexandriaTokenizer
 
 
@@ -16,11 +17,12 @@ def tokenizer():
 def trained_tokenizer():
     """Fixture providing a trained AlexandriaTokenizer instance."""
     tok = AlexandriaTokenizer(max_merges=5, load_tokenizer=False)
-    tok.build_vocab([
-        "hola mundo",
-        "hola amigo",
-        "mundo hermoso"
-    ])
+    with patch.object(tok, 'save_tokenizer'):
+        tok.build_vocab([
+            "hola mundo",
+            "hola amigo",
+            "mundo hermoso"
+        ])
     return tok
 
 
@@ -170,7 +172,8 @@ class TestAlexandriaTokenizer:
         """Test that build_vocab creates merge rules."""
         corpus = ["hola mundo", "hola amigo"]
 
-        tokenizer.build_vocab(corpus)
+        with patch.object(tokenizer, 'save_tokenizer'):
+            tokenizer.build_vocab(corpus)
 
         assert len(tokenizer.merges) > 0
         assert len(tokenizer.vocab) > 258  # More than base vocab
@@ -180,7 +183,8 @@ class TestAlexandriaTokenizer:
         tokenizer = AlexandriaTokenizer(max_merges=3, load_tokenizer=False)
         corpus = ["hola mundo mundo mundo"]
 
-        tokenizer.build_vocab(corpus)
+        with patch.object(tokenizer, 'save_tokenizer'):
+            tokenizer.build_vocab(corpus)
 
         # Should have exactly max_merges new tokens
         assert len(tokenizer.merges) == 3
@@ -349,7 +353,8 @@ class TestAlexandriaTokenizer:
 
         vocab_size_before = len(tokenizer.vocab)
 
-        tokenizer.build_vocab(["test texto"])
+        with patch.object(tokenizer, 'save_tokenizer'):
+            tokenizer.build_vocab(["test texto"])
 
         vocab_size_after = len(tokenizer.vocab)
 
@@ -361,10 +366,12 @@ class TestAlexandriaTokenizer:
         corpus = ["hola mundo", "hola amigo"]
 
         tokenizer1 = AlexandriaTokenizer(max_merges=3, load_tokenizer=False)
-        tokenizer1.build_vocab(corpus)
+        with patch.object(tokenizer1, 'save_tokenizer'):
+            tokenizer1.build_vocab(corpus)
 
         tokenizer2 = AlexandriaTokenizer(max_merges=3, load_tokenizer=False)
-        tokenizer2.build_vocab(corpus)
+        with patch.object(tokenizer2, 'save_tokenizer'):
+            tokenizer2.build_vocab(corpus)
 
         assert tokenizer1.merges == tokenizer2.merges
         assert len(tokenizer1.vocab) == len(tokenizer2.vocab)
