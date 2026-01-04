@@ -149,7 +149,6 @@ class AlexandriaTokenizer:
                 pairs_in_article = self._get_pairs(text)
                 total_pairs.update(pairs_in_article)
             if total_pairs:
-                # Usar criterio de desempate explícito: (frecuencia descendente, par ascendente)
                 most_common_pair = max(total_pairs.items(), key=lambda x: (x[1], -x[0][0], -x[0][1]))
                 self._update_vocab(most_common_pair, current_id)
                 corpus = self._update_token_in_corpus(corpus, most_common_pair[0], current_id)
