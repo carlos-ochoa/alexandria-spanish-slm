@@ -11,6 +11,8 @@ class AlexandriaMultiheadAttention(nn.Module):
         super().__init__()
         self.n_heads = config["n_heads"]
         self.d_head = config["d_model"] // self.n_heads
+        self.seq_len = config["seq_len"]
+        self.mask = torch.tril(torch.ones(self.seq_len, self.seq_len))
         self.W_v = nn.Linear(in_features=config["d_model"], out_features=config["d_model"], bias=False)
         self.W_k = nn.Linear(in_features=config["d_model"], out_features=config["d_model"], bias=False)
         self.W_q = nn.Linear(in_features=config["d_model"], out_features=config["d_model"], bias=False)
@@ -35,10 +37,11 @@ class AlexandriaMultiheadAttention(nn.Module):
         Q = Q.transpose(1,2) # (batch_size, n_heads, seq_len, d_head)
         K = K.transpose(1,2) # (batch_size, n_heads, seq_len, d_head)
 
-        # REMEMBER THE ATTENTION MASK
-
         alphas = Q @ K.transpose(-2, -1) / torch.sqrt(self.d_head) # (batch_size, n_heads, seq_len, d_head) @ (batch_size, n_heads, d_head, seq_len)
         # alphas is (batch_size, n_heads, seq_len, seq_len)
+
+        alphas = alphas.masked_fill(self.mask == 0, -torch.inf)
+
         Y = torch.softmax(alphas) @ V # (batch_size, n_heads, seq_len, seq_len) @ (batch_size, n_heads, seq_len, d_head)
         return Y # (batch_size, n_heads, seq_len, d_head)
 
