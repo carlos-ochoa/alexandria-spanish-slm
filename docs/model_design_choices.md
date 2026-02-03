@@ -8,6 +8,7 @@ As part of the design process some relevant papers have been analyzed. Even thou
 - [Attention is all you need](https://arxiv.org/pdf/1706.03762)
 - [Training compute-optimal Large Language Models](https://arxiv.org/pdf/2203.15556)
 - [Scaling laws for neural language models](https://arxiv.org/pdf/2001.08361)
+- [TinyStories: How small can language models be and still speak coherent English?](https://arxiv.org/pdf/2305.07759)
 
 ## Model Architecture
 
@@ -64,7 +65,12 @@ TODO:
 2. Armar el script para tener listos los ejemplos de entrenamiento
 3. Armar el modulo de IaC para levantar el cluster de runpod
 4. Configurar el wandb
+4. Configurar el setup para medir impacto ambiental del entrenamiento
 5. Documentar todo el training pipeline y las decisiones de diseño
 6. Conseguir más tokens
 7. Ejecutar el entrenamiento
 8. Armar el script de inferencia
+9. Configurar para compatibilidad con HuggingFace
+10. Puedo tomar solo articulos pequeños completos de menos de 256 tokens, y analizar los topicos. Alexandria seria bueno en eso y su vocab se veria afectado por este tipo de tópicos.
+
+# No lo haré ahorita, pero sería interesante un analisis de cómo las scaling laws permiten tomar decisiones informadas

@@ -108,3 +108,8 @@ Tokenizing a corpus of 4M tokens (expected for this exercise) takes around 15 mi
 Document the limitations on the tokenizer (and my thoughts on specialized ones for coding vs a generalist one)
 Algorithm Complexity
 Mejoras en la tasa de compresión del tokenizador nos permiten aprovechar mejor la ventana de contexto del modelo, más info con menos tokens
+
+"Decisión de diseño: Coherencia textual vs. volumen de datos
+Dada la ventana de contexto de 256 tokens, enfrenté un trade-off entre maximizar datos de entrenamiento (usando cortes arbitrarios) versus garantizar coherencia semántica completa (solo artículos que caben íntegros).
+Opté por coherencia: filtré el corpus a artículos completos ≤256 tokens, resultando en X artículos con Y millones de tokens totales. Esta decisión prioriza que el modelo aprenda distribuciones lingüísticas genuinas sobre patrones espurios de texto truncado.
+Consecuencia: El modelo estará sesgado hacia dominios de artículos breves de Wikipedia (principalmente: [lista tus categorías dominantes]). Evaluación futura debería medir performance diferencial por dominio."
