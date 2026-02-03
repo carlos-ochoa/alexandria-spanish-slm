@@ -209,3 +209,6 @@ __marimo__/
 # Custom folders
 /data
 /assets
+
+*.db
+*.lock
