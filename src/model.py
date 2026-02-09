@@ -111,8 +111,8 @@ class AlexandriaModel(nn.Module):
 
     def forward(self, x):
 
-        x = x['input_ids']
-        attention_mask = x['attention_mask']
+        x = x["input_ids"]
+        attention_mask = x["attention_mask"]
 
         _, seq_len, _ = x.shape
 
