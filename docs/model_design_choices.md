@@ -74,3 +74,35 @@ TODO:
 10. Puedo tomar solo articulos pequeños completos de menos de 256 tokens, y analizar los topicos. Alexandria seria bueno en eso y su vocab se veria afectado por este tipo de tópicos.
 
 # No lo haré ahorita, pero sería interesante un analisis de cómo las scaling laws permiten tomar decisiones informadas
+
+## Manejo de Padding en el Entrenamiento
+
+Alexandria utiliza `ignore_index` en la función de pérdida para 
+evitar que las posiciones de padding contribuyan al gradiente:
+```python
+loss_fn = nn.CrossEntropyLoss(ignore_index=pad_token_id)
+```
+
+Esto garantiza que el modelo solo aprende a predecir tokens reales 
+del español, no a replicar secuencias de padding.
+
+Hablemos del tema de broadcasting también
+
+## Lecciones Aprendidas: Máscaras de Atención
+
+Durante la implementación del sistema de máscaras, invertí tiempo 
+significativo entendiendo los fundamentos de broadcasting en PyTorch 
+y cómo se combinan múltiples máscaras.
+
+### Broadcasting: El mecanismo clave
+[Tus visualizaciones y ejemplos]
+
+### Por qué DOS máscaras
+1. Causal mask: Previene atención a futuro (arquitectura del modelo)
+2. Padding mask: Previene atención a tokens artificiales (datos de entrenamiento)
+
+### Tradeoff: Corrección vs Eficiencia
+La implementación actual computa attention para queries de padding 
+(~30% desperdicio computacional) pero garantiza corrección mediante 
+`ignore_index` en la loss. Versiones futuras pueden optimizar esto 
+con Flash Attention o packed sequences.
