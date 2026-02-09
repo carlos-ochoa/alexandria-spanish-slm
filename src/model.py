@@ -111,13 +111,16 @@ class AlexandriaModel(nn.Module):
 
     def forward(self, x):
 
+        x = x['input_ids']
+        attention_mask = x['attention_mask']
+
         _, seq_len, _ = x.shape
 
         token_emb = self.token_embeddings(x)
         pos_emb = self.positional_embeddings(torch.arange(seq_len))
         x = token_emb + pos_emb
         for transformer in self.attention_blocks:
-            x = transformer(x)
+            x = transformer(x, attention_mask)
         x_norm = self.norm(x)
         outputs = self.W_out(x_norm)
 
