@@ -1,6 +1,8 @@
 """Defines the training pipeline"""
 
+import comet_ml
 import tqdm
+from comet_ml.integration.pytorch import log_model, watch
 
 import torch
 import torch.nn as nn
@@ -15,6 +17,9 @@ from src.utils import ConfigManager, create_collate_fn
 cm = ConfigManager("config.yaml")
 tokenized_tensors_path = cm.config["data"]["tokenized_tensors"]
 batch_size = cm.config["batch_size"]
+
+hyperparams = cm.config["model"]
+log_every = 100
 
 pad_token_id = AlexandriaTokenizer(load_tokenizer=True).pad_token_id
 
@@ -38,23 +43,47 @@ test_data = DataLoader(
 )
 
 model = AlexandriaModel(config=cm.config)
+watch(model)
 
 loss_fn = nn.CrossEntropyLoss(ignore_index=pad_token_id)
 optimizer = torch.optim.AdamW(model.parameters())
 
 progress = tqdm(range(train_data.__len__))
 
-model.to(device)
+experiment = comet_ml.start(
+    project="alexandria-slm",
+    mode="get_or_create",
+    online=True,
+    log_graph=True,
+    auto_metric_logging=True,
+    experiment_config=comet_ml.ExperimentConfig(
+        auto_log_co2=True, name="small_test_v1", tags=["v1"]
+    ),
+)
 
-for batch in train_data:
-    # Move the model to the GPU (also the data)
+experiment.log_parameters(hyperparams)
+
+model.to(device)
+model.train()
+
+for step, batch in enumerate(train_data):
     input_data = {k: v.to(device) for k, v in batch}
-    # Get the raw logits from the model
+    optimizer.zero_grad()
     outputs = model(**input_data)
-    # Calculate the loss over the outputs
     loss = loss_fn(outputs, input_data["labels"])
+    experiment.log_metric("train_loss", loss.item(), step=step)
+    # Evaluate the current behavior of the model
+    if step % log_every == 0:
+        pass
     loss.backward()
     optimizer.step()
     progress.update(1)
 
+log_model(experiment, model, model_name="alexandria_v1")
+
 # No olvidemos los checkpoints
+# Y la elección de hiperparámetros del optimizer
+# Agreguemos un scheduler
+# Agregar en evaluation que se generen ejemplos de generación cada ciertos steps para ver cómo evoluciona
+# Considerar un early stopping
+# Arreglar el acceso a configuraciones desde el model.py
