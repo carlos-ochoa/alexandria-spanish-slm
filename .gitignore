@@ -218,3 +218,5 @@ __marimo__/
 *.tfplan
 *.tfstate
 *.tfstate.*
+
+.DS_Store
