@@ -2,6 +2,8 @@ import yaml
 
 from torch.nn.utils.rnn import pad_sequence
 
+from src.model import AlexandriaModel
+
 
 class ConfigManager:
     def __init__(self, path: str):
@@ -11,6 +13,11 @@ class ConfigManager:
         with open(path, encoding="utf8") as f:
             config = yaml.safe_load(f)
         return config
+
+
+class EvaluationMetrics:
+    def __init__(self):
+        pass
 
 
 def create_collate_fn(pad_token_id=258):
@@ -31,3 +38,10 @@ def create_collate_fn(pad_token_id=258):
         }
 
     return custom_padding_collate
+
+
+def evaluate(model: AlexandriaModel):
+    model.eval()
+    # evaluator = EvaluationMetrics()
+    metrics = None
+    return metrics
