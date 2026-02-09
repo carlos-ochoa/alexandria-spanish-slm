@@ -1,7 +1,7 @@
 [project]
 name = "alexandria-spanish-slm"
 version = "0.1.0"
-description = "Add your description here"
+description = "Code for training Alexandria SLM based on decoder-only transformers"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
@@ -9,11 +9,15 @@ dependencies = [
     "pytest>=9.0.2",
     "python-dotenv>=1.2.1",
     "pyyaml==6.0.3",
+    "scikit-learn==1.8.0",
     "torch==2.9.1",
     "tqdm>=4.67.1",
     "wikipedia>=1.4.0",
     "wikipedia-api>=0.8.1",
 ]
+
+[tool.setuptools]
+packages = ["src"]
 
 [tool.pytest.ini_options]
 pythonpath = "."
@@ -21,3 +25,51 @@ testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.15.0",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "F",   # pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "UP",  # pyupgrade
+    "SIM", # flake8-simplify
+]
+
+ignore = [
+    "E501",
+]
+
+exclude = [
+    ".git",
+    "__pycache__",
+    ".venv",
+    "venv",
+    "data",
+    "models",
+    "checkpoints",
+    "wandb",
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["src"]
+section-order = [
+    "future",
+    "standard-library", 
+    "third-party",
+    "ml-frameworks",
+    "first-party",
+    "local-folder"
+]
+
+[tool.ruff.lint.isort.sections]
+"ml-frameworks" = ["torch", "numpy", "pandas", "sklearn"]
