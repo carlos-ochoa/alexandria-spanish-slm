@@ -5,6 +5,8 @@ description = "Code for training Alexandria SLM based on decoder-only transforme
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "codecarbon==3.2.2",
+    "comet-ml==3.55.0",
     "datasets==4.4.2",
     "pytest>=9.0.2",
     "python-dotenv>=1.2.1",
