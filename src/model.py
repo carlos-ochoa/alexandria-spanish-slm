@@ -7,18 +7,18 @@ import torch.nn as nn
 class AlexandriaMultiheadAttention(nn.Module):
     def __init__(self, config: dict):
         super().__init__()
-        self.n_heads = config["n_heads"]
-        self.d_head = config["d_model"] // self.n_heads
-        self.seq_len = config["seq_len"]
+        self.n_heads = config["model"]["n_heads"]
+        self.d_head = config["model"]["d_model"] // self.n_heads
+        self.seq_len = config["model"]["seq_len"]
         self.mask = torch.tril(torch.ones(self.seq_len, self.seq_len))
         self.W_v = nn.Linear(
-            in_features=config["d_model"], out_features=config["d_model"], bias=False
+            in_features=config["model"]["d_model"], out_features=config["model"]["d_model"], bias=False
         )
         self.W_k = nn.Linear(
-            in_features=config["d_model"], out_features=config["d_model"], bias=False
+            in_features=config["model"]["d_model"], out_features=config["model"]["d_model"], bias=False
         )
         self.W_q = nn.Linear(
-            in_features=config["d_model"], out_features=config["d_model"], bias=False
+            in_features=config["model"]["d_model"], out_features=config["model"]["d_model"], bias=False
         )
 
     def forward(self, x, attention_mask=None):
@@ -64,8 +64,8 @@ class AlexandriaMultiheadAttention(nn.Module):
 class AlexandriaTransformerBlock(nn.Module):
     def __init__(self, config: dict):
         super().__init__()
-        self.d_model = config["d_model"]
-        self.d_ff = config["d_ff"]
+        self.d_model = config["model"]["d_model"]
+        self.d_ff = config["model"]["d_ff"]
         self.norm1 = nn.LayerNorm(self.d_model)
         self.attention = AlexandriaMultiheadAttention(config)
         self.W_o = nn.Linear(self.d_model, self.d_model)
@@ -99,12 +99,14 @@ class AlexandriaTransformerBlock(nn.Module):
 class AlexandriaModel(nn.Module):
     def __init__(self, config: dict):
         super().__init__()
-        self.d_model = config["d_model"]
-        self.vocab_size = config["vocab_size"]
-        self.token_embeddings = nn.Embedding(config["vocab_size"], config["d_model"])
-        self.positional_embeddings = nn.Embedding(config["seq_len"], config["d_model"])
+        self.d_model = config["model"]["d_model"]
+        self.vocab_size = config["model"]["vocab_size"]
+        self.seq_len = config["model"]["seq_len"]
+        self.n_layers = config["model"]["n_layers"]
+        self.token_embeddings = nn.Embedding(self.vocab_size, self.d_model)
+        self.positional_embeddings = nn.Embedding(self.seq_len, self.d_model)
         self.attention_blocks = nn.ModuleList(
-            [AlexandriaTransformerBlock(config) for _ in range(config["n_layers"])]
+            [AlexandriaTransformerBlock(config) for _ in range(self.n_layers)]
         )
         self.norm = nn.LayerNorm(self.d_model)
         self.W_out = nn.Linear(self.d_model, self.vocab_size)
