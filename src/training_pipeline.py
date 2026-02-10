@@ -12,7 +12,7 @@ from torch.utils.data import DataLoader
 from dataset import AlexandriaDataset
 from src.model import AlexandriaModel
 from src.tools.data.tokenizer import AlexandriaTokenizer
-from src.utils import ConfigManager, create_collate_fn
+from src.utils import ConfigManager, create_collate_fn, evaluate, generate_text
 
 cm = ConfigManager("config.yaml")
 tokenized_tensors_path = cm.config["data"]["tokenized_tensors"]
@@ -20,8 +20,11 @@ batch_size = cm.config["batch_size"]
 
 hyperparams = cm.config["model"]
 log_every = 100
+max_tokens = 30
+eval_prompt = "Un conejo y una tortuga se encontraban"
 
-pad_token_id = AlexandriaTokenizer(load_tokenizer=True).pad_token_id
+tokenizer = AlexandriaTokenizer(load_tokenizer=True)
+pad_token_id = tokenizer.pad_token_id
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -67,6 +70,7 @@ model.to(device)
 model.train()
 
 for step, batch in enumerate(train_data):
+    
     input_data = {k: v.to(device) for k, v in batch}
     optimizer.zero_grad()
     outputs = model(**input_data)
@@ -74,7 +78,12 @@ for step, batch in enumerate(train_data):
     experiment.log_metric("train_loss", loss.item(), step=step)
     # Evaluate the current behavior of the model
     if step % log_every == 0:
-        pass
+        model.eval()
+        eval_metrics = evaluate(model, test_data, pad_token_id)
+        generated_text = generate_text(model, eval_prompt, max_tokens, tokenizer)
+        experiment.log_metrics(eval_metrics)
+        experiment.log_text(generated_text)
+        model.train()
     loss.backward()
     optimizer.step()
     progress.update(1)
@@ -86,4 +95,4 @@ log_model(experiment, model, model_name="alexandria_v1")
 # Agreguemos un scheduler
 # Agregar en evaluation que se generen ejemplos de generación cada ciertos steps para ver cómo evoluciona
 # Considerar un early stopping
-# Arreglar el acceso a configuraciones desde el model.py
+# Agreguemos la intuición matemática del cross-entropy, su relación con perplexity y con la divergencia KL
