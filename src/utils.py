@@ -1,8 +1,12 @@
 import yaml
 
+import torch
+import torch.nn as nn
 from torch.nn.utils.rnn import pad_sequence
+from torch.utils.data import DataLoader
 
 from src.model import AlexandriaModel
+from src.tools.data.tokenizer import AlexandriaTokenizer
 
 
 class ConfigManager:
@@ -13,12 +17,6 @@ class ConfigManager:
         with open(path, encoding="utf8") as f:
             config = yaml.safe_load(f)
         return config
-
-
-class EvaluationMetrics:
-    def __init__(self):
-        pass
-
 
 def create_collate_fn(pad_token_id=258):
     def custom_padding_collate(batch):
@@ -40,8 +38,28 @@ def create_collate_fn(pad_token_id=258):
     return custom_padding_collate
 
 
-def evaluate(model: AlexandriaModel):
-    model.eval()
-    # evaluator = EvaluationMetrics()
-    metrics = None
+def evaluate(model: AlexandriaModel, test_data : DataLoader, pad_token_id : int):
+    metrics = {}
+    # Calculate the loss on validation data
+    with torch.no_grad():
+        for batch in test_data:
+            loss_fn = nn.CrossEntropyLoss(ignore_index=pad_token_id)
+            outputs = model(**batch)
+            loss = loss_fn(outputs, batch['labels'])
+            perplexity = torch.exp(loss)
+    metrics['test_loss'] = loss
+    metrics['perplexity'] = perplexity
     return metrics
+
+def generate_text(model : AlexandriaModel, eval_prompt : str, max_tokens : int, tokenizer : AlexandriaTokenizer):
+    with torch.no_grad():
+        for _ in range(max_tokens):
+            tokenized_prompt = tokenizer.tokenize(eval_prompt)
+            input = {
+                'input_ids' : tokenized_prompt,
+                'attention_mask' : None
+            }
+            output = model(**input)
+            output = torch.argmax(output)
+            eval_prompt = tokenizer.decode(tokenized_prompt + [output])
+    return tokenizer.decode(eval_prompt)
