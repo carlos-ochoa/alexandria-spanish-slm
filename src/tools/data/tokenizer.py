@@ -26,7 +26,7 @@ class AlexandriaTokenizer:
         """Saves the tokenizer vocab and other metadata to basic json structure"""
         save_format = {
             "max_merges": self.max_merges,
-            # "vocab": self.vocab,
+            "vocab": self.vocab,
             "vocab_str": self.vocab_str,
             "merges": {str(k): v for k, v in self.merges.items()},
         }
@@ -38,7 +38,8 @@ class AlexandriaTokenizer:
         with open("assets/tokenizer.json") as f:
             load_format = json.load(f)
         self.vocab_str = load_format["vocab_str"]
-        self.max_merges = {ast.literal_eval(k): v for k, v in load_format["max_merges"]}
+        #self.max_merges = {ast.literal_eval(k): v for k, v in load_format["max_merges"]}
+        self.max_merges = load_format["max_merges"]
         self.merges = load_format["merges"]
         self.vocab = {
             k: v.encode("utf-8") if isinstance(v, str) else v for k, v in self.vocab_str.items()
