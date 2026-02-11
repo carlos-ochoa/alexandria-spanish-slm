@@ -62,6 +62,9 @@ class AlexandriaMultiheadAttention(nn.Module):
             ) # for broadcasting: (batch_size, 1, 1, seq_len)
             alphas = alphas.masked_fill(padding_mask == 0, -torch.inf)
 
+        all_inf_mask = (alphas == float('-inf')).all(dim=-1, keepdim=True)
+        alphas = alphas.masked_fill(all_inf_mask, 0.0)
+
         Y = (
             torch.softmax(alphas, dim=-1) @ V
         )  # (batch_size, n_heads, seq_len, seq_len) @ (batch_size, n_heads, seq_len, d_head)
