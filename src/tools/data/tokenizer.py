@@ -1,22 +1,21 @@
-"""Definition for the Alexandria Tokenizer. Custom implementation of BPE
-"""
+"""Definition for the Alexandria Tokenizer. Custom implementation of BPE"""
 
-from collections import Counter
-from typing import Tuple, List, Dict
-from tqdm import tqdm
 import ast
 import json
+from collections import Counter
+
+from tqdm import tqdm
 
 
 class AlexandriaTokenizer:
-
-    def __init__(self, max_merges : int = 8000, load_tokenizer : bool = False):
+    def __init__(self, max_merges: int = 8000, load_tokenizer: bool = False):
         self.vocab = {}
         self.vocab_str = {}
         self.stats = {}
         self.max_merges = max_merges
         self.merges = {}
-        self.vocab_size = max_merges + 258
+        self.vocab_size = max_merges + 259
+        self.pad_token_id = 258
         self.most_frequent_merges = Counter()
         if load_tokenizer:
             self.load_tokenizer()
@@ -24,47 +23,48 @@ class AlexandriaTokenizer:
             self.init_vocab()
 
     def save_tokenizer(self) -> None:
-        """Saves the tokenizer vocab and other metadata to basic json structure
-        """
+        """Saves the tokenizer vocab and other metadata to basic json structure"""
         save_format = {
             "max_merges": self.max_merges,
-            #"vocab": self.vocab,
+            "vocab": self.vocab,
             "vocab_str": self.vocab_str,
-            "merges": {str(k) : v for k,v in self.merges.items()},
+            "merges": {str(k): v for k, v in self.merges.items()},
         }
         with open("assets/tokenizer.json", "w") as f:
             json.dump(save_format, f)
 
     def load_tokenizer(self) -> None:
-        """Loads vocab and metadata from previous execution
-        """
-        with open("assets/tokenizer.json", "r") as f:
+        """Loads vocab and metadata from previous execution"""
+        with open("assets/tokenizer.json") as f:
             load_format = json.load(f)
         self.vocab_str = load_format["vocab_str"]
-        self.max_merges = {ast.literal_eval(k) : v for k,v in load_format["max_merges"]}
+        #self.max_merges = {ast.literal_eval(k): v for k, v in load_format["max_merges"]}
+        self.max_merges = load_format["max_merges"]
         self.merges = load_format["merges"]
-        self.vocab = {k: v.encode('utf-8') if isinstance(v, str) else v 
-                     for k, v in self.vocab_str.items()}
+        self.vocab = {
+            k: v.encode("utf-8") if isinstance(v, str) else v for k, v in self.vocab_str.items()
+        }
 
     def init_vocab(self) -> None:
-        """Inits the first 258 tokens of the vocabulary
-        """
+        """Inits the first 258 tokens of the vocabulary"""
         for i in range(256):
             self.vocab[i] = bytes([i])
             try:
-                self.vocab_str[i] = bytes([i]).decode('ascii')
+                self.vocab_str[i] = bytes([i]).decode("ascii")
                 if i == 32:
-                    self.vocab_str[i] = '·'
+                    self.vocab_str[i] = "·"
                 elif i < 32 or i == 127:
-                    self.vocab_str[i] = f'<0x{i:02X}>'
-            except:
-                self.vocab_str[i] = f'<0x{i:02X}>'
-        self.vocab[256] = b'<UNK>'
-        self.vocab[257] = b'<EOS>'
-        self.vocab_str[256] = '<UNK>'
-        self.vocab_str[257] = '<EOS>'
+                    self.vocab_str[i] = f"<0x{i:02X}>"
+            except Exception:
+                self.vocab_str[i] = f"<0x{i:02X}>"
+        self.vocab[256] = b"<UNK>"
+        self.vocab[257] = b"<EOS>"
+        self.vocab[258] = b"<PAD>"
+        self.vocab_str[256] = "<UNK>"
+        self.vocab_str[257] = "<EOS>"
+        self.vocab_str[258] = "<PAD>"
 
-    def _text_to_bytes(self, corpus : List[str]) -> List[int]:
+    def _text_to_bytes(self, corpus: list[str]) -> list[int]:
         """Converts the strings of text into bytes with utf-8 codec
 
         Args:
@@ -75,10 +75,10 @@ class AlexandriaTokenizer:
         """
         bytes_corpus = []
         for text in corpus:
-            bytes_corpus.append(list(bytes(text, 'utf-8')))
+            bytes_corpus.append(list(bytes(text, "utf-8")))
         return bytes_corpus
 
-    def _get_pairs(self, bytes_text : List[int]) -> List[Tuple[int, int]]:
+    def _get_pairs(self, bytes_text: list[int]) -> list[tuple[int, int]]:
         """Gets all the possible pairs of bytes in the text
 
         Args:
@@ -89,12 +89,12 @@ class AlexandriaTokenizer:
         """
         pairs = []
         i = 0
-        while i < len(bytes_text)-1:
-            pairs.append((bytes_text[i], bytes_text[i+1]))
+        while i < len(bytes_text) - 1:
+            pairs.append((bytes_text[i], bytes_text[i + 1]))
             i += 1
         return pairs
 
-    def _update_vocab(self, pair : Tuple[int], token_id : int) -> None:
+    def _update_vocab(self, pair: tuple[int], token_id: int) -> None:
         """Updates the vocabulary and other metadata with new tokens
 
         Args:
@@ -103,12 +103,13 @@ class AlexandriaTokenizer:
         """
         new_token = self.vocab[pair[0][0]] + self.vocab[pair[0][1]]
         self.vocab[token_id] = new_token
-        self.vocab_str[token_id] = self.vocab[token_id].decode('utf-8', errors='replace')
+        self.vocab_str[token_id] = self.vocab[token_id].decode("utf-8", errors="replace")
         self.merges[pair[0]] = token_id
         self.most_frequent_merges[pair] = pair[1]
 
-    def _update_token_in_corpus(self, corpus: List[List[int]], pair: Tuple[int, int],
-                         new_token: int) -> List[List[int]]:
+    def _update_token_in_corpus(
+        self, corpus: list[list[int]], pair: tuple[int, int], new_token: int
+    ) -> list[list[int]]:
         """Replaces the merge with its new ID in the corpus
 
         Args:
@@ -133,7 +134,7 @@ class AlexandriaTokenizer:
             new_corpus.append(new_text)
         return new_corpus
 
-    def build_vocab(self, corpus : List[str]) -> None:
+    def build_vocab(self, corpus: list[str]) -> None:
         """A function to tokenize the corpus or text passed
 
         Args:
@@ -149,7 +150,9 @@ class AlexandriaTokenizer:
                 pairs_in_article = self._get_pairs(text)
                 total_pairs.update(pairs_in_article)
             if total_pairs:
-                most_common_pair = max(total_pairs.items(), key=lambda x: (x[1], -x[0][0], -x[0][1]))
+                most_common_pair = max(
+                    total_pairs.items(), key=lambda x: (x[1], -x[0][0], -x[0][1])
+                )
                 self._update_vocab(most_common_pair, current_id)
                 corpus = self._update_token_in_corpus(corpus, most_common_pair[0], current_id)
                 current_id += 1
@@ -160,7 +163,7 @@ class AlexandriaTokenizer:
         print(self.merges)
         self.save_tokenizer()
 
-    def _find_merges(self, text : List[int]) -> Tuple[Tuple, int]:
+    def _find_merges(self, text: list[int]) -> tuple[tuple, int]:
         """Finds the possible merges appliable to the text. Returns only
             the earliest created one for merging. Used for tokenizing unseen data.
 
@@ -172,18 +175,15 @@ class AlexandriaTokenizer:
         """
         i = 0
         merges = {}
-        while i < len(text)-1: # O(m)
-            key = (text[i], text[i+1])
-            if key in self.merges: # O(1)
-                  merges[key] = self.merges[key]
+        while i < len(text) - 1:
+            key = (text[i], text[i + 1])
+            if key in self.merges:
+                merges[key] = self.merges[key]
             i += 1
-        if merges:
-          merge = min(merges.items(), key=lambda x: x[1]) # O(k) Esto podria ser un heap y ya queda mejor
-        else:
-          merge = None
+        merge = min(merges.items(), key=lambda x: x[1]) if merges else None
         return merge
 
-    def _replace_merges_in_text(self, text : List[int], merge : Tuple[Tuple, int]) -> List[int]:
+    def _replace_merges_in_text(self, text: list[int], merge: tuple[tuple, int]) -> list[int]:
         """Replaces the given merge in all the ocurrences in the byte-encoded text
 
         Args:
@@ -195,8 +195,8 @@ class AlexandriaTokenizer:
         """
         i = 0
         new_text = []
-        while i < len(text): # O(m)
-            if i < len(text)-1 and text[i] == merge[0][0] and text[i+1] == merge[0][1]:
+        while i < len(text):  # O(m)
+            if i < len(text) - 1 and text[i] == merge[0][0] and text[i + 1] == merge[0][1]:
                 new_text.append(merge[1])
                 i += 2
             else:
@@ -204,7 +204,7 @@ class AlexandriaTokenizer:
                 i += 1
         return new_text
 
-    def visualize_tokenization(self, tokens : List[int]) -> str:
+    def visualize_tokenization(self, tokens: list[int]) -> str:
         """Represents the string-encoded text separating the tokens that conform it
 
         Args:
@@ -218,7 +218,7 @@ class AlexandriaTokenizer:
             text = text + "|" + self.vocab_str[token]
         return text
 
-    def _tokenize_str(self, text : str) -> List[int]:
+    def _tokenize_str(self, text: str) -> list[int]:
         """Tokenizes a string-encoded text into learned tokens
 
         Args:
@@ -227,14 +227,14 @@ class AlexandriaTokenizer:
         Returns:
             List[int]: Representation in tokens
         """
-        text = self._text_to_bytes([text])[0] # O(m)
-        merge = self._find_merges(text) # O(m)
-        while merge is not None: # O(mk)
-            text = self._replace_merges_in_text(text, merge) # O(m)
-            merge = self._find_merges(text) # O(m)
+        text = self._text_to_bytes([text])[0]  # O(m)
+        merge = self._find_merges(text)  # O(m)
+        while merge is not None:  # O(mk)
+            text = self._replace_merges_in_text(text, merge)  # O(m)
+            merge = self._find_merges(text)  # O(m)
         return text
 
-    def _add_eos_token(self, text : List[int]) -> List[int]:
+    def _add_eos_token(self, text: list[int]) -> list[int]:
         """Adds special EOS token to a given text. Used only for training purposes.
 
         Args:
@@ -245,7 +245,7 @@ class AlexandriaTokenizer:
         """
         return text.append(257)
 
-    def tokenize(self, text : str | List[str]) -> List[int]:
+    def tokenize(self, text: str | list[str]) -> list[int]:
         """Tokenizes a single string or a corpus. Uses learned vocabulary.
 
         Args:
@@ -259,14 +259,14 @@ class AlexandriaTokenizer:
             return tokenized_text
         if isinstance(text, str):
             tokenized_text = self._tokenize_str(text)
-        elif isinstance(text, List):
+        elif isinstance(text, list):
             pbar = tqdm(total=len(text))
-            for t in text: # O(nmk)
+            for t in text:  # O(nmk)
                 tokenized_text.append(self._tokenize_str(t))
                 pbar.update(1)
         return tokenized_text
 
-    def decode(self, tokenized_text : List[int] | List[List[int]]) -> str | List[str]:
+    def decode(self, tokenized_text: list[int] | list[list[int]]) -> str | list[str]:
         """Decodes a token-encoded text and returns its string-encoded representation
 
         Args:
@@ -277,5 +277,5 @@ class AlexandriaTokenizer:
         """
         text = ""
         for token in tokenized_text:
-            text = text + self.vocab[token].decode('utf-8')
+            text = text + self.vocab[token].decode("utf-8")
         return text

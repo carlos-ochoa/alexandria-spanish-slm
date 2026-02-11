@@ -212,3 +212,11 @@ __marimo__/
 
 *.db
 *.lock
+*.tfvars
+*.hcl
+.terraform
+*.tfplan
+*.tfstate
+*.tfstate.*
+
+.DS_Store

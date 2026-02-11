@@ -1,9 +1,10 @@
-"""Unit tests for the AlexandriaTokenizer
-"""
+"""Unit tests for the AlexandriaTokenizer"""
+
+from collections import Counter
+from unittest.mock import patch
 
 import pytest
-from collections import Counter
-from unittest.mock import patch, MagicMock
+
 from src.tools.data.tokenizer import AlexandriaTokenizer
 
 
@@ -17,17 +18,12 @@ def tokenizer():
 def trained_tokenizer():
     """Fixture providing a trained AlexandriaTokenizer instance."""
     tok = AlexandriaTokenizer(max_merges=5, load_tokenizer=False)
-    with patch.object(tok, 'save_tokenizer'):
-        tok.build_vocab([
-            "hola mundo",
-            "hola amigo",
-            "mundo hermoso"
-        ])
+    with patch.object(tok, "save_tokenizer"):
+        tok.build_vocab(["hola mundo", "hola amigo", "mundo hermoso"])
     return tok
 
 
 class TestAlexandriaTokenizer:
-
     def test_init_default_max_merges(self):
         """Test tokenizer initialization with default max_merges."""
         tokenizer = AlexandriaTokenizer(load_tokenizer=False)
@@ -51,21 +47,21 @@ class TestAlexandriaTokenizer:
 
     def test_init_vocab_special_tokens(self, tokenizer):
         """Test that special tokens are correctly initialized."""
-        assert tokenizer.vocab[256] == b'<UNK>'
-        assert tokenizer.vocab[257] == b'<EOS>'
-        assert tokenizer.vocab_str[256] == '<UNK>'
-        assert tokenizer.vocab_str[257] == '<EOS>'
+        assert tokenizer.vocab[256] == b"<UNK>"
+        assert tokenizer.vocab[257] == b"<EOS>"
+        assert tokenizer.vocab_str[256] == "<UNK>"
+        assert tokenizer.vocab_str[257] == "<EOS>"
 
     def test_init_vocab_str_space_representation(self, tokenizer):
         """Test that space character (32) is represented as middle dot."""
-        assert tokenizer.vocab_str[32] == '·'
+        assert tokenizer.vocab_str[32] == "·"
 
     def test_init_vocab_str_control_characters(self, tokenizer):
         """Test that control characters are represented in hex format."""
         # Test control character (e.g., newline)
-        assert tokenizer.vocab_str[10] == '<0x0A>'
+        assert tokenizer.vocab_str[10] == "<0x0A>"
         # Test DEL character
-        assert tokenizer.vocab_str[127] == '<0x7F>'
+        assert tokenizer.vocab_str[127] == "<0x7F>"
 
     def test_text_to_bytes_single_text(self, tokenizer):
         """Test converting single text to bytes."""
@@ -98,7 +94,7 @@ class TestAlexandriaTokenizer:
         assert isinstance(pairs, list)
         assert (104, 111) in pairs  # 'h', 'o'
         assert (111, 108) in pairs  # 'o', 'l'
-        assert (108, 97) in pairs   # 'l', 'a'
+        assert (108, 97) in pairs  # 'l', 'a'
         assert len(pairs) == 3
 
     def test_get_pairs_repeated(self, tokenizer):
@@ -128,8 +124,8 @@ class TestAlexandriaTokenizer:
         tokenizer._update_vocab(pair, token_id)
 
         assert token_id in tokenizer.vocab
-        assert tokenizer.vocab[token_id] == b'ho'
-        assert tokenizer.vocab_str[token_id] == 'ho'
+        assert tokenizer.vocab[token_id] == b"ho"
+        assert tokenizer.vocab_str[token_id] == "ho"
         assert tokenizer.merges[(104, 111)] == token_id
         assert tokenizer.most_frequent_merges[pair] == 5
 
@@ -172,7 +168,7 @@ class TestAlexandriaTokenizer:
         """Test that build_vocab creates merge rules."""
         corpus = ["hola mundo", "hola amigo"]
 
-        with patch.object(tokenizer, 'save_tokenizer'):
+        with patch.object(tokenizer, "save_tokenizer"):
             tokenizer.build_vocab(corpus)
 
         assert len(tokenizer.merges) > 0
@@ -183,7 +179,7 @@ class TestAlexandriaTokenizer:
         tokenizer = AlexandriaTokenizer(max_merges=3, load_tokenizer=False)
         corpus = ["hola mundo mundo mundo"]
 
-        with patch.object(tokenizer, 'save_tokenizer'):
+        with patch.object(tokenizer, "save_tokenizer"):
             tokenizer.build_vocab(corpus)
 
         # Should have exactly max_merges new tokens
@@ -212,7 +208,7 @@ class TestAlexandriaTokenizer:
     def test_find_merges_multiple(self, tokenizer):
         """Test finding earliest merge when multiple exist."""
         tokenizer.merges[(104, 111)] = 258  # 'h', 'o' - later merge
-        tokenizer.merges[(108, 97)] = 259   # 'l', 'a' - even later merge
+        tokenizer.merges[(108, 97)] = 259  # 'l', 'a' - even later merge
 
         text = [104, 111, 108, 97]  # "hola"
         merge = tokenizer._find_merges(text)
@@ -250,8 +246,8 @@ class TestAlexandriaTokenizer:
         result = tokenizer.visualize_tokenization(tokens)
 
         assert isinstance(result, str)
-        assert '|' in result
-        assert 'h' in result or '104' in result
+        assert "|" in result
+        assert "h" in result or "104" in result
 
     def test_visualize_tokenization_special_tokens(self, tokenizer):
         """Test visualization with special tokens."""
@@ -259,8 +255,8 @@ class TestAlexandriaTokenizer:
 
         result = tokenizer.visualize_tokenization(tokens)
 
-        assert '<UNK>' in result
-        assert '<EOS>' in result
+        assert "<UNK>" in result
+        assert "<EOS>" in result
 
     def test_visualize_tokenization_space(self, tokenizer):
         """Test visualization with space character."""
@@ -268,7 +264,7 @@ class TestAlexandriaTokenizer:
 
         result = tokenizer.visualize_tokenization(tokens)
 
-        assert '·' in result
+        assert "·" in result
 
     def test_tokenize_single_string(self, trained_tokenizer):
         """Test tokenizing a single string."""
@@ -312,7 +308,7 @@ class TestAlexandriaTokenizer:
     def test_decode_with_merged_tokens(self, tokenizer):
         """Test decoding with merged tokens."""
         # Add a merged token
-        tokenizer.vocab[258] = b'ho'
+        tokenizer.vocab[258] = b"ho"
         tokens = [258, 108, 97]  # 'ho' + 'l' + 'a'
 
         result = tokenizer.decode(tokens)
@@ -325,8 +321,8 @@ class TestAlexandriaTokenizer:
 
         result = tokenizer.decode(tokens)
 
-        assert '<UNK>' in result
-        assert '<EOS>' in result
+        assert "<UNK>" in result
+        assert "<EOS>" in result
 
     def test_encode_decode_roundtrip(self, trained_tokenizer):
         """Test that encoding and decoding are inverse operations."""
@@ -353,7 +349,7 @@ class TestAlexandriaTokenizer:
 
         vocab_size_before = len(tokenizer.vocab)
 
-        with patch.object(tokenizer, 'save_tokenizer'):
+        with patch.object(tokenizer, "save_tokenizer"):
             tokenizer.build_vocab(["test texto"])
 
         vocab_size_after = len(tokenizer.vocab)
@@ -366,11 +362,11 @@ class TestAlexandriaTokenizer:
         corpus = ["hola mundo", "hola amigo"]
 
         tokenizer1 = AlexandriaTokenizer(max_merges=3, load_tokenizer=False)
-        with patch.object(tokenizer1, 'save_tokenizer'):
+        with patch.object(tokenizer1, "save_tokenizer"):
             tokenizer1.build_vocab(corpus)
 
         tokenizer2 = AlexandriaTokenizer(max_merges=3, load_tokenizer=False)
-        with patch.object(tokenizer2, 'save_tokenizer'):
+        with patch.object(tokenizer2, "save_tokenizer"):
             tokenizer2.build_vocab(corpus)
 
         assert tokenizer1.merges == tokenizer2.merges
