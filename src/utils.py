@@ -45,7 +45,7 @@ def create_collate_fn(pad_token_id=258, max_seq_len=256):
     return custom_padding_collate
 
 
-def evaluate(model: AlexandriaModel, test_data: DataLoader, pad_token_id: int, vocab_size : int):
+def evaluate(model: AlexandriaModel, test_data: DataLoader, pad_token_id: int, vocab_size: int):
     metrics = {}
     loss = 0
     perplexity = 0
@@ -53,7 +53,7 @@ def evaluate(model: AlexandriaModel, test_data: DataLoader, pad_token_id: int, v
     with torch.no_grad():
         for batch in test_data:
             loss_fn = nn.CrossEntropyLoss(ignore_index=pad_token_id)
-            #print(batch["input_ids"])
+            # print(batch["input_ids"])
             outputs = model(batch)
             outputs = outputs.view(-1, vocab_size)
             labels = batch["labels"].view(-1)
@@ -74,8 +74,12 @@ def generate_text(
             tokenized_prompt = tokenized_prompt.unsqueeze(0)
             input = {"input_ids": tokenized_prompt, "attention_mask": None}
             output = model(input)
-            next_token_logits = output[:, -1, :] # because we want only the logits for the last token
-            next_token = torch.argmax(next_token_logits, dim=-1) # current implementation takes greedy decoding
+            next_token_logits = output[
+                :, -1, :
+            ]  # because we want only the logits for the last token
+            next_token = torch.argmax(
+                next_token_logits, dim=-1
+            )  # current implementation takes greedy decoding
             tokenized_prompt = tokenized_prompt.tolist()[0] + next_token.tolist()
     return tokenized_prompt
 

@@ -51,7 +51,9 @@ class AlexandriaMultiheadAttention(nn.Module):
         )  # (batch_size, n_heads, seq_len, d_head) @ (batch_size, n_heads, d_head, seq_len)
         # alphas is (batch_size, n_heads, seq_len, seq_len)
 
-        causal_mask = torch.tril(torch.ones(seq_len, seq_len, device=x.device)) # It used to be seq_len
+        causal_mask = torch.tril(
+            torch.ones(seq_len, seq_len, device=x.device)
+        )  # It used to be seq_len
 
         alphas = alphas.masked_fill(causal_mask == 0, -torch.inf)
 
@@ -59,10 +61,10 @@ class AlexandriaMultiheadAttention(nn.Module):
         if attention_mask is not None:
             padding_mask = attention_mask.unsqueeze(1).unsqueeze(
                 2
-            ) # for broadcasting: (batch_size, 1, 1, seq_len)
+            )  # for broadcasting: (batch_size, 1, 1, seq_len)
             alphas = alphas.masked_fill(padding_mask == 0, -torch.inf)
 
-        all_inf_mask = (alphas == float('-inf')).all(dim=-1, keepdim=True)
+        all_inf_mask = (alphas == float("-inf")).all(dim=-1, keepdim=True)
         alphas = alphas.masked_fill(all_inf_mask, 0.0)
 
         Y = (
@@ -91,7 +93,9 @@ class AlexandriaTransformerBlock(nn.Module):
         normalized_x = self.norm1(x)
         Y = self.attention(normalized_x, attention_mask)  # (batch_size, n_heads, seq_len, d_head)
         # Check the concat operation, in this case, I might need only to execute a view
-        Y = Y.transpose(1, 2).contiguous() # By default .transpose() converts saves the result in no contiguous memory
+        Y = Y.transpose(
+            1, 2
+        ).contiguous()  # By default .transpose() converts saves the result in no contiguous memory
         Y = Y.view(batch_size, seq_len, d_model)
         # Input to the W_o
         outputs = self.W_o(Y)

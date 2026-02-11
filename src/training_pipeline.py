@@ -43,13 +43,13 @@ train_data, test_data = train_test_split(dataset, test_size=0.2, train_size=0.8)
 train_data = DataLoader(
     train_data,
     batch_size=batch_size,
-    #shuffle=True,
+    # shuffle=True,
     collate_fn=create_collate_fn(pad_token_id=pad_token_id),
 )
 test_data = DataLoader(
     test_data,
     batch_size=batch_size,
-    #shuffle=True,
+    # shuffle=True,
     collate_fn=create_collate_fn(pad_token_id=pad_token_id),
 )
 
@@ -57,7 +57,7 @@ model = AlexandriaModel(config=cm.config)
 
 loss_fn = nn.CrossEntropyLoss(ignore_index=pad_token_id)
 optimizer = torch.optim.AdamW(model.parameters(), lr=1e-4)
-lr_scheduler = CosineAnnealingLR(optimizer, T_max=100) # Check way of working
+lr_scheduler = CosineAnnealingLR(optimizer, T_max=100)  # Check way of working
 
 progress = tqdm(range(len(train_data)))
 
@@ -66,7 +66,9 @@ experiment = comet_ml.start(
     mode="get_or_create",
     online=True,
     experiment_config=comet_ml.ExperimentConfig(
-        auto_log_co2=True, name="small_test_v1", tags=["v1"],
+        auto_log_co2=True,
+        name="small_test_v1",
+        tags=["v1"],
         log_graph=True,
         auto_metric_logging=True,
     ),
@@ -82,10 +84,10 @@ model.train()
 for step, batch in enumerate(train_data):
     input_data = {k: v.to(device) for k, v in batch.items()}
     optimizer.zero_grad()
-    #print("INPUT, ", input_data["input_ids"])
+    # print("INPUT, ", input_data["input_ids"])
     outputs = model(input_data)
-    outputs = outputs.view(-1, vocab_size) # equivalent to .view(batch_size * seq_len, vocab_size)
-    labels = input_data["labels"].view(-1) # equivalent to .view(batch_size * seq_len,)
+    outputs = outputs.view(-1, vocab_size)  # equivalent to .view(batch_size * seq_len, vocab_size)
+    labels = input_data["labels"].view(-1)  # equivalent to .view(batch_size * seq_len,)
     # Fix labels shape to match loss_fn
     loss = loss_fn(outputs, labels)
     experiment.log_metric("train_loss", loss.item(), step=step)
@@ -99,7 +101,9 @@ for step, batch in enumerate(train_data):
         generated_text = tokenizer.visualize_tokenization(generated_text)
         experiment.log_metrics(eval_metrics)
         experiment.log_text(generated_text, step=step)
-        checkpoint = save_model_checkpoint(model, step, optimizer, loss, eval_metrics, generated_text)
+        checkpoint = save_model_checkpoint(
+            model, step, optimizer, loss, eval_metrics, generated_text
+        )
         experiment.log_asset(checkpoint, file_name=checkpoint, step=step)
         model.train()
     progress.update(1)
