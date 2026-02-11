@@ -51,7 +51,7 @@ class AlexandriaMultiheadAttention(nn.Module):
         )  # (batch_size, n_heads, seq_len, d_head) @ (batch_size, n_heads, d_head, seq_len)
         # alphas is (batch_size, n_heads, seq_len, seq_len)
 
-        causal_mask = torch.tril(torch.ones(seq_len, seq_len)) # It used to be seq_len
+        causal_mask = torch.tril(torch.ones(seq_len, seq_len, device=x.device)) # It used to be seq_len
 
         alphas = alphas.masked_fill(causal_mask == 0, -torch.inf)
 
