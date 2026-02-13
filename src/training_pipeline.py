@@ -28,14 +28,11 @@ vocab_size = cm.config["model"]["vocab_size"]
 
 hyperparams = cm.config["model"]
 log_every = 10
-max_tokens = 30
+max_tokens = 3
 eval_prompt = "Un conejo y una tortuga se encontraban"
 
 tokenizer = AlexandriaTokenizer(load_tokenizer=True)
 pad_token_id = tokenizer.pad_token_id
-
-print(tokenizer.vocab["1"])
-input()
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -46,21 +43,21 @@ train_data, test_data = train_test_split(dataset, test_size=0.2, train_size=0.8)
 train_data = DataLoader(
     train_data,
     batch_size=batch_size,
-    #shuffle=True,
+    # shuffle=True,
     collate_fn=create_collate_fn(pad_token_id=pad_token_id),
 )
 test_data = DataLoader(
     test_data,
     batch_size=batch_size,
-    #shuffle=True,
+    # shuffle=True,
     collate_fn=create_collate_fn(pad_token_id=pad_token_id),
 )
 
 model = AlexandriaModel(config=cm.config)
 
 loss_fn = nn.CrossEntropyLoss(ignore_index=pad_token_id)
-optimizer = torch.optim.AdamW(model.parameters())
-lr_scheduler = CosineAnnealingLR(optimizer, T_max=100) # Check way of working
+optimizer = torch.optim.AdamW(model.parameters(), lr=1e-4)
+lr_scheduler = CosineAnnealingLR(optimizer, T_max=100)  # Check way of working
 
 progress = tqdm(range(len(train_data)))
 
@@ -69,7 +66,9 @@ experiment = comet_ml.start(
     mode="get_or_create",
     online=True,
     experiment_config=comet_ml.ExperimentConfig(
-        auto_log_co2=True, name="small_test_v1", tags=["v1"],
+        auto_log_co2=True,
+        name="small_test_v1",
+        tags=["v1"],
         log_graph=True,
         auto_metric_logging=True,
     ),
@@ -85,31 +84,34 @@ model.train()
 for step, batch in enumerate(train_data):
     input_data = {k: v.to(device) for k, v in batch.items()}
     optimizer.zero_grad()
-    print(input_data["input_ids"].shape)
+    # print("INPUT, ", input_data["input_ids"])
     outputs = model(input_data)
-    outputs = outputs.view(-1, vocab_size) # equivalent to .view(batch_size * seq_len, vocab_size)
-    labels = input_data["labels"].view(-1) # equivalent to .view(batch_size * seq_len,)
+    outputs = outputs.view(-1, vocab_size)  # equivalent to .view(batch_size * seq_len, vocab_size)
+    labels = input_data["labels"].view(-1)  # equivalent to .view(batch_size * seq_len,)
     # Fix labels shape to match loss_fn
     loss = loss_fn(outputs, labels)
     experiment.log_metric("train_loss", loss.item(), step=step)
+    loss.backward()
+    optimizer.step()
+    lr_scheduler.step()
     if step % log_every == 0:
         model.eval()
         eval_metrics = evaluate(model, test_data, pad_token_id, vocab_size)
         generated_text = generate_text(model, eval_prompt, max_tokens, tokenizer)
         generated_text = tokenizer.visualize_tokenization(generated_text)
         experiment.log_metrics(eval_metrics)
-        experiment.log_text(generated_text)
-        save_model_checkpoint(model, step, optimizer, loss)
+        experiment.log_text(generated_text, step=step)
+        checkpoint = save_model_checkpoint(
+            model, step, optimizer, loss, eval_metrics, generated_text
+        )
+        experiment.log_asset(checkpoint, file_name=checkpoint, step=step)
         model.train()
-    loss.backward()
-    optimizer.step()
     progress.update(1)
 
 log_model(experiment, model, model_name="alexandria_v1")
 
-# Change save method in tokenizer, or load one, because keys are stored as str and must be int
 # Y la elección de hiperparámetros del optimizer
-# Agreguemos en el collator el tema de cortar cosas que superen el tamaño de los tokens
 # Revisar en pizarron cómo el view con los labels termina logrando tensores que encajan
-# Agreguemos la intuición matemática del cross-entropy, su relación con perplexity y con la divergencia KL
-# Add temperature to sampling
+# Validate perplexity is logged in comet
+# Documentar el sobreajuste del tokenizer ocn las fábulas y cómo vamos a generar otro pequeño dataset para el tokenizer y luego aplicarlo a tiny-coop-es
+# Prueba final con pocos datos para verificar que puedo cargar y hacer inferencia tranquilamente

@@ -1,0 +1,1 @@
+La belleza del cross entropy es que además de penalizar malas predicciones lo hace más duro si son overconfident

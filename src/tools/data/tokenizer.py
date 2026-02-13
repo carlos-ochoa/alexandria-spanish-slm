@@ -8,42 +8,47 @@ from tqdm import tqdm
 
 
 class AlexandriaTokenizer:
-    def __init__(self, max_merges: int = 8000, load_tokenizer: bool = False):
+    def __init__(self, max_merges: int = 8000, load_tokenizer: bool = False, load_path : str = "assets/tokenizer.json"):
         self.vocab = {}
         self.vocab_str = {}
         self.stats = {}
         self.max_merges = max_merges
         self.merges = {}
-        self.vocab_size = max_merges + 259
+        self.vocab_size = max_merges + 258
         self.pad_token_id = 258
         self.most_frequent_merges = Counter()
         if load_tokenizer:
-            self.load_tokenizer()
+            self.load_tokenizer(load_path)
         else:
             self.init_vocab()
 
-    def save_tokenizer(self) -> None:
+    def save_tokenizer(self, save_path : str = "assets/tokenizer.json") -> None:
         """Saves the tokenizer vocab and other metadata to basic json structure"""
         save_format = {
             "max_merges": self.max_merges,
-            "vocab": self.vocab,
+            # "vocab": self.vocab,
             "vocab_str": self.vocab_str,
             "merges": {str(k): v for k, v in self.merges.items()},
         }
-        with open("assets/tokenizer.json", "w") as f:
-            json.dump(save_format, f)
+        with open(save_path, "w") as f:
+            json.dump(save_format, f, indent=4)
 
-    def load_tokenizer(self) -> None:
+    def load_tokenizer(self, load_path : str) -> None:
         """Loads vocab and metadata from previous execution"""
-        with open("assets/tokenizer.json") as f:
+        with open(load_path, "r") as f:
             load_format = json.load(f)
-        self.vocab_str = load_format["vocab_str"]
-        #self.max_merges = {ast.literal_eval(k): v for k, v in load_format["max_merges"]}
+        # self.vocab_str = load_format["vocab_str"]
+        self.init_vocab()
+        self.vocab_str = {int(k): v for k, v in load_format["vocab_str"].items()}
+        # self.max_merges = {ast.literal_eval(k): v for k, v in load_format["max_merges"]}
         self.max_merges = load_format["max_merges"]
-        self.merges = load_format["merges"]
-        self.vocab = {
-            k: v.encode("utf-8") if isinstance(v, str) else v for k, v in self.vocab_str.items()
+        #self.merges = load_format["merges"]
+        self.merges = {ast.literal_eval(k) : v for k,v in load_format["merges"].items()}
+        vocab_comp = {
+            int(k): v.encode("utf-8") if isinstance(v, str) else v
+            for k, v in self.vocab_str.items() if int(k) > 255
         }
+        self.vocab.update(vocab_comp)
 
     def init_vocab(self) -> None:
         """Inits the first 258 tokens of the vocabulary"""
@@ -142,7 +147,7 @@ class AlexandriaTokenizer:
         """
         pbar = tqdm(total=self.max_merges)
         total_merges = 0
-        current_id = 258
+        current_id = 259
         corpus = self._text_to_bytes(corpus)
         while total_merges < self.max_merges:
             total_pairs = Counter()
@@ -160,8 +165,6 @@ class AlexandriaTokenizer:
             else:
                 break
             pbar.update(1)
-        print(self.merges)
-        self.save_tokenizer()
 
     def _find_merges(self, text: list[int]) -> tuple[tuple, int]:
         """Finds the possible merges appliable to the text. Returns only
@@ -216,6 +219,7 @@ class AlexandriaTokenizer:
         text = ""
         for token in tokens:
             text = text + "|" + self.vocab_str[token]
+        text += "|"
         return text
 
     def _tokenize_str(self, text: str) -> list[int]:

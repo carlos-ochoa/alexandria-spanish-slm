@@ -21,8 +21,8 @@ class ConfigManager:
 
 def create_collate_fn(pad_token_id=258, max_seq_len=256):
     def custom_padding_collate(batch):
-        tensors = [torch.tensor(input_id) for input_id, _ in batch]
-        labels = [torch.tensor(label) for _, label in batch]
+        tensors = [torch.tensor(input_id).long() for input_id, _ in batch]
+        labels = [torch.tensor(label).long() for _, label in batch]
 
         longest_input = max(t.size(0) for t in tensors)
 
@@ -45,43 +45,39 @@ def create_collate_fn(pad_token_id=258, max_seq_len=256):
     return custom_padding_collate
 
 
-def evaluate(model: AlexandriaModel, test_data: DataLoader, pad_token_id: int, vocab_size : int):
+def evaluate(model: AlexandriaModel, test_data: DataLoader, pad_token_id: int, vocab_size: int):
     metrics = {}
     loss = 0
-    perplexity = 0
-    # Calculate the loss on validation data
     with torch.no_grad():
         for batch in test_data:
             loss_fn = nn.CrossEntropyLoss(ignore_index=pad_token_id)
-            #print(batch["input_ids"])
             outputs = model(batch)
             outputs = outputs.view(-1, vocab_size)
             labels = batch["labels"].view(-1)
             loss += loss_fn(outputs, labels)
-            perplexity += torch.exp(loss)
-    metrics["test_loss"] = loss
-    metrics["perplexity"] = perplexity
+    metrics["test_loss"] = loss / len(test_data)
+    metrics["perplexity"] = torch.exp(loss)
     return metrics
 
 
 def generate_text(
     model: AlexandriaModel, eval_prompt: str, max_tokens: int, tokenizer: AlexandriaTokenizer
 ):
+    tokenized_prompt = tokenizer.tokenize(eval_prompt)
     with torch.no_grad():
         for _ in range(max_tokens):
-            tokenized_prompt = tokenizer.tokenize(eval_prompt)
             tokenized_prompt = torch.tensor(tokenized_prompt)
             tokenized_prompt = tokenized_prompt.unsqueeze(0)
             input = {"input_ids": tokenized_prompt, "attention_mask": None}
             output = model(input)
-            print(output.shape)
-            next_token_logits = output[:, -1, :] # because we want only the logits for the last token
-            # Incomplete, at the moment I'm operating over raw logits, need softmax
-            # Check the dimension to take argmax
-            next_token = torch.argmax(next_token_logits, dim=-1) # current implementation takes greedy decoding
-            print(tokenized_prompt.tolist()[0],next_token.tolist())
-            eval_prompt = tokenizer.decode(tokenized_prompt.tolist()[0] + [next_token])
-    return tokenizer.decode(eval_prompt)
+            next_token_logits = output[
+                :, -1, :
+            ]  # because we want only the logits for the last token
+            next_token = torch.argmax(
+                next_token_logits, dim=-1
+            )  # current implementation takes greedy decoding
+            tokenized_prompt = tokenized_prompt.tolist()[0] + next_token.tolist()
+    return tokenized_prompt
 
 
 def save_model_checkpoint(
@@ -103,3 +99,4 @@ def save_model_checkpoint(
         },
         f"checkpoint-{step}.pth",
     )
+    return f"checkpoint-{step}.pth"
