@@ -110,7 +110,8 @@ for step, batch in enumerate(train_data):
 
 log_model(experiment, model, model_name="alexandria_v1")
 
-# When loading vocab, must transform to bytes, not only string
 # Y la elección de hiperparámetros del optimizer
 # Revisar en pizarron cómo el view con los labels termina logrando tensores que encajan
-# Agreguemos la intuición matemática del cross-entropy, su relación con perplexity y con la divergencia KL
+# Validate perplexity is logged in comet
+# Documentar el sobreajuste del tokenizer ocn las fábulas y cómo vamos a generar otro pequeño dataset para el tokenizer y luego aplicarlo a tiny-coop-es
+# Prueba final con pocos datos para verificar que puedo cargar y hacer inferencia tranquilamente
