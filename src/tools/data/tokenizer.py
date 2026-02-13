@@ -144,7 +144,7 @@ class AlexandriaTokenizer:
         """
         pbar = tqdm(total=self.max_merges)
         total_merges = 0
-        current_id = 258
+        current_id = 259
         corpus = self._text_to_bytes(corpus)
         while total_merges < self.max_merges:
             total_pairs = Counter()
@@ -218,6 +218,7 @@ class AlexandriaTokenizer:
         text = ""
         for token in tokens:
             text = text + "|" + self.vocab_str[token]
+        text += "|"
         return text
 
     def _tokenize_str(self, text: str) -> list[int]:
