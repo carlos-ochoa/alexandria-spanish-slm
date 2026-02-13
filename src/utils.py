@@ -48,19 +48,15 @@ def create_collate_fn(pad_token_id=258, max_seq_len=256):
 def evaluate(model: AlexandriaModel, test_data: DataLoader, pad_token_id: int, vocab_size: int):
     metrics = {}
     loss = 0
-    perplexity = 0
-    # Calculate the loss on validation data
     with torch.no_grad():
         for batch in test_data:
             loss_fn = nn.CrossEntropyLoss(ignore_index=pad_token_id)
-            # print(batch["input_ids"])
             outputs = model(batch)
             outputs = outputs.view(-1, vocab_size)
             labels = batch["labels"].view(-1)
             loss += loss_fn(outputs, labels)
-            perplexity += torch.exp(loss)
-    metrics["test_loss"] = loss
-    metrics["perplexity"] = perplexity
+    metrics["test_loss"] = loss / len(test_data)
+    metrics["perplexity"] = torch.exp(loss)
     return metrics
 
 
