@@ -65,7 +65,7 @@ def evaluate(model: AlexandriaModel, test_data: DataLoader, pad_token_id: int, v
 
 
 def generate_text(
-    model: AlexandriaModel, eval_prompt: str, max_tokens: int, tokenizer: AlexandriaTokenizer
+    model: AlexandriaModel, eval_prompt: str, max_tokens: int, tokenizer: AlexandriaTokenizer, T : float = 1.0, greedy : bool = False
 ):
     tokenized_prompt = tokenizer.tokenize(eval_prompt)
     with torch.no_grad():
@@ -80,9 +80,15 @@ def generate_text(
             next_token_logits = output[
                 :, -1, :
             ]  # because we want only the logits for the last token
-            next_token = torch.argmax(
-                next_token_logits, dim=-1
-            )  # current implementation takes greedy decoding
+            scaled_logits = next_token_logits / (T + 1e-10)
+            probs = torch.softmax(scaled_logits, dim=-1)
+            if greedy:
+                next_token = torch.argmax(
+                    probs, dim=-1
+                )  # current implementation takes greedy decoding
+            else:
+                next_token = torch.multinomial(probs, num_samples=1).item()
+                next_token = torch.tensor([next_token])
             tokenized_prompt = tokenized_prompt.tolist()[0] + next_token.tolist()
     return tokenized_prompt
 
