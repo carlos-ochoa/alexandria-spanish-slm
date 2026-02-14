@@ -27,14 +27,20 @@ batch_size = cm.config["batch_size"]
 vocab_size = cm.config["model"]["vocab_size"]
 
 hyperparams = cm.config["model"]
-log_every = 10
+log_every = 100
 max_tokens = 3
 eval_prompt = "Un conejo y una tortuga se encontraban"
 
 tokenizer = AlexandriaTokenizer(load_tokenizer=True)
 pad_token_id = tokenizer.pad_token_id
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+device = torch.device(
+    "cuda" if torch.cuda.is_available()
+#     else "mps" if torch.backends.mps.is_available()
+    else "cpu"
+)
+
+print(device)
 
 tokenized_tensors = torch.load(tokenized_tensors_path)
 dataset = AlexandriaDataset(tokenized_tensors)
@@ -67,7 +73,7 @@ experiment = comet_ml.start(
     online=True,
     experiment_config=comet_ml.ExperimentConfig(
         auto_log_co2=True,
-        name="small_test_v1",
+        name="small_test_v3_mac",
         tags=["v1"],
         log_graph=True,
         auto_metric_logging=True,
@@ -84,11 +90,9 @@ model.train()
 for step, batch in enumerate(train_data):
     input_data = {k: v.to(device) for k, v in batch.items()}
     optimizer.zero_grad()
-    # print("INPUT, ", input_data["input_ids"])
     outputs = model(input_data)
     outputs = outputs.view(-1, vocab_size)  # equivalent to .view(batch_size * seq_len, vocab_size)
     labels = input_data["labels"].view(-1)  # equivalent to .view(batch_size * seq_len,)
-    # Fix labels shape to match loss_fn
     loss = loss_fn(outputs, labels)
     experiment.log_metric("train_loss", loss.item(), step=step)
     loss.backward()
