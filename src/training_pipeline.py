@@ -98,7 +98,7 @@ for step, batch in enumerate(train_data):
     loss.backward()
     optimizer.step()
     lr_scheduler.step()
-    if step % log_every == 0:
+    if step % log_every == 0 or step % len(train_data) == 0:
         model.eval()
         eval_metrics = evaluate(model, test_data, pad_token_id, vocab_size)
         generated_text = generate_text(model, eval_prompt, max_tokens, tokenizer)
