@@ -74,9 +74,9 @@ def generate_text(
             tokenized_prompt = tokenized_prompt.unsqueeze(0)
             input = {"input_ids": tokenized_prompt, "attention_mask": None}
             start_time = time.time()
-            print(start_time)
+            #print(start_time)
             output = model(input)
-            print("Time per token (s): ", time.time() - start_time)
+            #print("Time per token (s): ", time.time() - start_time)
             next_token_logits = output[
                 :, -1, :
             ]  # because we want only the logits for the last token
