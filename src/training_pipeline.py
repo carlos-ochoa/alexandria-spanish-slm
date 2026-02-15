@@ -28,8 +28,8 @@ vocab_size = cm.config["model"]["vocab_size"]
 
 hyperparams = cm.config["model"]
 log_every = 100
-max_tokens = 3
-eval_prompt = "Un conejo y una tortuga se encontraban"
+max_tokens = 30
+eval_prompt = "Un conejo y una tortuga se encontraban "
 
 tokenizer = AlexandriaTokenizer(load_tokenizer=True)
 pad_token_id = tokenizer.pad_token_id
@@ -73,8 +73,8 @@ experiment = comet_ml.start(
     online=True,
     experiment_config=comet_ml.ExperimentConfig(
         auto_log_co2=True,
-        name="small_test_v3_mac",
-        tags=["v1"],
+        name="final_test_v3_mac",
+        tags=["v3"],
         log_graph=True,
         auto_metric_logging=True,
     ),
@@ -112,7 +112,7 @@ for step, batch in enumerate(train_data):
         model.train()
     progress.update(1)
 
-log_model(experiment, model, model_name="alexandria_v1")
+log_model(experiment, model, model_name="alexandria_v2")
 
 # Y la elección de hiperparámetros del optimizer
 # Revisar en pizarron cómo el view con los labels termina logrando tensores que encajan
