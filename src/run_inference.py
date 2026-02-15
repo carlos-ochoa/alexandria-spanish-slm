@@ -4,6 +4,7 @@ from src.tools.data.tokenizer import AlexandriaTokenizer
 from src.utils import generate_text, ConfigManager
 
 import pandas as pd
+from tqdm import tqdm
 
 cm = ConfigManager("config.yaml")
 tokenizer = AlexandriaTokenizer(load_tokenizer=True)
@@ -12,6 +13,7 @@ model = AlexandriaModel(config=cm.config)
 checkpoints = [
     f"assets/checkpoint-{step}-{step}.pth" for step in range(0, 2500, 100) 
 ]
+
 checkpoints.append("assets/model-data_comet-torch-model-2500.pth")
 
 results = {
@@ -22,8 +24,14 @@ results = {
     "temperature" : []
 }
 
+progress = tqdm(range(len(checkpoints)))
+
 for checkpoint in checkpoints:
-    model.load_state_dict(torch.load(checkpoint))
+    if checkpoint == "assets/model-data_comet-torch-model-2500.pth":
+        model.load_state_dict(torch.load(checkpoint))
+    else:
+        check = torch.load(checkpoint)["model_state_dict"]
+        model.load_state_dict(check)
 
     prompts = [
         "Estaban dos personas en ",
@@ -39,11 +47,14 @@ for checkpoint in checkpoints:
     for prompt in prompts:
         tokens = generate_text(model, prompt, max_tokens, tokenizer, T=temperature)
 
+    text = tokenizer.visualize_tokenization(tokens)
+
     results["model"].append(checkpoint)
     results["prompt"].append(prompt)
-    results["output"].append(tokens)
+    results["output"].append(text)
     results["max_tokens"].append(max_tokens)
     results["temperature"].append(temperature)
+    progress.update(1)
 
 results = pd.DataFrame(results)
 results.to_csv("assets/results_v2.csv")
@@ -51,3 +62,4 @@ results.to_csv("assets/results_v2.csv")
 
 # Hablemos sobre el tema de los sesgos implícitos, y cómo queda de aprendizaje poder analizar mejor los datos
 # sintéticos o no, con técnicas como NLP para informar mejor su composición
+# Agregar una columna con greedy y otra con Temp
