@@ -9,19 +9,18 @@ import torch
 from src.tools.data.tokenizer import AlexandriaTokenizer
 from src.utils import ConfigManager
 
+
 cm = ConfigManager("config.yaml")
 tokenized_dataset_path = cm.config["data"]["tokenized_tensors"]
 
 ds = load_dataset("hetline/tiny-coop-es")
 
-dataset = ds["train"].shuffle(seed=42)
+dataset = ds["train"].shuffle(seed=42).select(range(1500))
 dataset = list(dataset["text"])
 tokenizer_ds = ds["train"].shuffle(seed=42).select(range(500))
 tokenizer_ds = tokenizer_ds["text"]
 
-tokenizer = AlexandriaTokenizer()
-tokenizer.build_vocab(tokenizer_ds)
-tokenizer.save_tokenizer()
+tokenizer = AlexandriaTokenizer(load_tokenizer=True)
 
 tokenized_dataset = tokenizer.tokenize(dataset)
 

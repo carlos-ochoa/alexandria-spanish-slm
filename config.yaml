@@ -1,5 +1,5 @@
 model:
-  vocab_size: 8258
+  vocab_size: 8259
   d_model: 256
   seq_len: 256
   n_layers: 6
