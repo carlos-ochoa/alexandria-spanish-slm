@@ -133,7 +133,7 @@ class AlexandriaModel(nn.Module):
         _, seq_len = x.shape
 
         token_emb = self.token_embeddings(x)
-        pos_emb = self.positional_embeddings(torch.arange(seq_len))
+        pos_emb = self.positional_embeddings(torch.arange(seq_len, device=x.device))
         x = token_emb + pos_emb
         for transformer in self.attention_blocks:
             x = transformer(x, attention_mask)
