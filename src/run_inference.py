@@ -10,11 +10,12 @@ cm = ConfigManager("config.yaml")
 tokenizer = AlexandriaTokenizer(load_tokenizer=True)
 model = AlexandriaModel(config=cm.config)
 
-checkpoints = [
-    f"assets/checkpoint-{step}-{step}.pth" for step in range(0, 2500, 100) 
-]
+#checkpoints = [
+#    f"assets/checkpoint-{step}-{step}.pth" for step in range(0, 2500, 100) 
+#]
+checkpoints = []
 
-checkpoints.append("assets/model-data_comet-torch-model-2500.pth")
+checkpoints.append("assets/model-data_comet-torch-model-2500-v2.pth")
 
 results = {
     "model" : [],
@@ -27,8 +28,8 @@ results = {
 progress = tqdm(range(len(checkpoints)))
 
 for checkpoint in checkpoints:
-    if checkpoint == "assets/model-data_comet-torch-model-2500.pth":
-        model.load_state_dict(torch.load(checkpoint))
+    if checkpoint == "assets/model-data_comet-torch-model-2500-v2.pth":
+        model.load_state_dict(torch.load(checkpoint, map_location=torch.device('cpu')))
     else:
         check = torch.load(checkpoint)["model_state_dict"]
         model.load_state_dict(check)
@@ -38,7 +39,8 @@ for checkpoint in checkpoints:
         "El conejo estaba a la orilla del río ",
         "La tor",
         "Carlos ",
-        "Azul es el cielo "
+        "Azul es el cielo ",
+        "Sin recursos moriremos "
     ]
 
     max_tokens = 50
@@ -47,13 +49,16 @@ for checkpoint in checkpoints:
     for prompt in prompts:
         tokens = generate_text(model, prompt, max_tokens, tokenizer, T=temperature)
 
-    text = tokenizer.visualize_tokenization(tokens)
+        text = tokenizer.visualize_tokenization(tokens)
 
-    results["model"].append(checkpoint)
-    results["prompt"].append(prompt)
-    results["output"].append(text)
-    results["max_tokens"].append(max_tokens)
-    results["temperature"].append(temperature)
+        print(text)
+        print("-------")
+
+        results["model"].append(checkpoint)
+        results["prompt"].append(prompt)
+        results["output"].append(text)
+        results["max_tokens"].append(max_tokens)
+        results["temperature"].append(temperature)
     progress.update(1)
 
 results = pd.DataFrame(results)
