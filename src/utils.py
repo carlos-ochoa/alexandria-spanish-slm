@@ -47,16 +47,17 @@ def create_collate_fn(pad_token_id=258, max_seq_len=256):
     return custom_padding_collate
 
 
-def evaluate(model: AlexandriaModel, test_data: DataLoader, pad_token_id: int, vocab_size: int):
+def evaluate(model: AlexandriaModel, test_data: DataLoader, pad_token_id: int, vocab_size: int, device : str):
     metrics = {}
     loss = 0
     progress = tqdm(range(len(test_data)))
     with torch.no_grad():
         for batch in test_data:
+            input_data = {k: v.to(device) for k, v in batch.items()}
             loss_fn = nn.CrossEntropyLoss(ignore_index=pad_token_id)
-            outputs = model(batch)
+            outputs = model(input_data)
             outputs = outputs.view(-1, vocab_size)
-            labels = batch["labels"].view(-1)
+            labels = input_data["labels"].view(-1)
             loss += loss_fn(outputs, labels)
             progress.update(1)
     metrics["test_loss"] = loss / len(test_data)

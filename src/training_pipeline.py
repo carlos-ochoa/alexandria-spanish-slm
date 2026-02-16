@@ -100,7 +100,7 @@ for step, batch in enumerate(train_data):
     lr_scheduler.step()
     if step % log_every == 0 or step % len(train_data) == 0:
         model.eval()
-        eval_metrics = evaluate(model, test_data, pad_token_id, vocab_size)
+        eval_metrics = evaluate(model, test_data, pad_token_id, vocab_size, device)
         generated_text = generate_text(model, eval_prompt, max_tokens, tokenizer)
         generated_text = tokenizer.visualize_tokenization(generated_text)
         experiment.log_metrics(eval_metrics)
