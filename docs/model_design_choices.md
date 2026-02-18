@@ -224,7 +224,7 @@ El |ratón |quería |trabaj|aban |juntos|. La |Luna |dijo: "¡|Yo |también|. |L
 
 ## Carbon emissions
 
-During training, the carbon emissions have been tracked with [codecarbon](https://codecarbon.io). For Alexandria total trainings the emissions are presented in the next visualizations.
+During training, the carbon emissions have been tracked with [codecarbon](https://codecarbon.io). For Alexandria total trainings the emissions are presented in the next visuals.
 
 ![emissions](img/emissions.png)
 
