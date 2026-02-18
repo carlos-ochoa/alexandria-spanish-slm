@@ -7,15 +7,18 @@ import pandas as pd
 from tqdm import tqdm
 
 cm = ConfigManager("config.yaml")
-tokenizer = AlexandriaTokenizer(load_tokenizer=True)
+version = "v2"
+if version == "v1":
+    tokenizer = AlexandriaTokenizer(load_tokenizer=True, load_path="assets/tokenizer_good.json")
+else:
+    tokenizer = AlexandriaTokenizer(load_tokenizer=True, load_path="assets/tokenizer.json")
 model = AlexandriaModel(config=cm.config)
 
-#checkpoints = [
-#    f"assets/checkpoint-{step}-{step}.pth" for step in range(0, 2500, 100) 
-#]
-checkpoints = []
+checkpoints = [
+    f"assets/{version}/checkpoint-{step}-{step}.pth" for step in range(0, 3000, 1000) 
+]
 
-checkpoints.append("assets/model-data_comet-torch-model-2500-v2.pth")
+checkpoints.append(f"assets/{version}/model-data_comet-torch-model-2500-{version}.pth")
 
 results = {
     "model" : [],
@@ -28,10 +31,11 @@ results = {
 progress = tqdm(range(len(checkpoints)))
 
 for checkpoint in checkpoints:
-    if checkpoint == "assets/model-data_comet-torch-model-2500-v2.pth":
+    if checkpoint == f"assets/{version}/model-data_comet-torch-model-2500-{version}.pth":
         model.load_state_dict(torch.load(checkpoint, map_location=torch.device('cpu')))
     else:
-        check = torch.load(checkpoint)["model_state_dict"]
+        check = torch.load(checkpoint, map_location=torch.device('cpu'))["model_state_dict"]
+        print(checkpoint)
         model.load_state_dict(check)
 
     prompts = [
@@ -40,7 +44,7 @@ for checkpoint in checkpoints:
         "La tor",
         "Carlos ",
         "Azul es el cielo ",
-        "Sin recursos moriremos "
+        "Moraleja: "
     ]
 
     max_tokens = 50
@@ -62,7 +66,7 @@ for checkpoint in checkpoints:
     progress.update(1)
 
 results = pd.DataFrame(results)
-results.to_csv("assets/results_v2.csv")
+results.to_csv(f"assets/results_{version}.csv")
 #print(tokenizer.visualize_tokenization(tokens))
 
 # Hablemos sobre el tema de los sesgos implícitos, y cómo queda de aprendizaje poder analizar mejor los datos
