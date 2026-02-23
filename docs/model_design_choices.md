@@ -14,7 +14,7 @@ As part of the design process some relevant papers have been analyzed. Even thou
 
 Two different versions of Alexandria were trained on this project. Both versions follow the exact same architecture and design decisions. However, Alexandria 1 was trained on [tiny-coop-es](https://huggingface.co/datasets/hetline/tiny-coop-es) dataset tokenized with Tokenizer V1. 
 On the other hand, Alexandria 1.1 has been trained with the same dataset tokenized with Tokenizer V2.
-Further details on the differences on each tokenizer must be consulted in 'Data Design Choices' document.
+Further details on the differences on each tokenizer must be consulted in [Data and Tokenizer design](https://github.com/carlos-ochoa/alexandria-spanish-slm/blob/main/docs/data_design_choices.md) document.
 
 A final performance comparison between Alexandria 1 and Alexandria 1.1 will be discussed at the end of this model card.
 
@@ -218,7 +218,6 @@ El |ratón |quería |trabaj|aban |juntos|. La |Luna |dijo: "¡|Yo |también|. |L
 ❌ Can't do (yet):
 - Perfect verb conjugation
 - Complex sentence completion
-- Consistent tokenization of all words
 
 → Path forward: Curated synthetic data + larger model to capture better the Spanish nuances
 
