@@ -87,4 +87,9 @@ uv run src/run_inference.py
 
 You can find the open weights for Alexandria 1 (v1) and Alexandria 1.1 (v2) as well as the tokenizers configuration used to train the models in the **assets** folder.
 
+## Model, dataset and tokenizer definitions
+
+Available in src/model.py, src/dataset.py and src/tools/data/tokenizer.py respectively
+
+
 
