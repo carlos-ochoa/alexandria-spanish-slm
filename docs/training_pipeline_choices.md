@@ -68,9 +68,43 @@ Alexandria was trained on 2500 batches of 32 examples per batch. In general, the
 
 ## Optimizer and scheduler
 
-Adam with Weight Decay has been selected as the optimizer algorithm for training.
+### AdamW
 
-For scheduling process a cosine anealling LR component was selected.
+Adam with Weight Decay has been selected as the optimizer algorithm for training. This is mostly due to its popularity on the training of complex neural networks such as the ones based on transformers. Also, the AdamW implementation helps on adding regularization to avoid overfitting in a natural way.
+
+$$\theta_{t+1} = \theta_t - \frac{\alpha}{\sqrt{\hat{v}_t} + \epsilon} \hat{m}_t - \alpha \lambda \theta_t$$
+
+$$\text{where:}$$
+
+$$m_t = \beta_1 m_{t-1} + (1 - \beta_1) g_t$$
+
+$$v_t = \beta_2 v_{t-1} + (1 - \beta_2) g_t^2$$
+
+$$\text{applying bias correction:}$$
+
+$$\hat{m}_t = \frac{m_t}{1 - \beta_1^t}, \quad \hat{v}_t = \frac{v_t}{1 - \beta_2^t}$$
+
+The parameters used to train Alexandria are defined as follows:
+
+$\alpha = 1e^{-4}$
+
+$\beta_1 = 0.9$ $\beta_2 = 0.999$
+
+$\lambda = 0.01$
+
+### Cosine Annealing LR
+
+For scheduling process a cosine anealling LR component was selected. In general, I did not opt for the cosine annealing version with warm restarts given that, even though the model's structure is complex, I did not consider it was necessary to restart the lr in order to avoid local minima due to the volume of data. However, next version can be scheduled with this method to compare results.
+
+I selected cosine annealing to easily manage the learning rate values in a way that help AdamW to work better. Training transformers might draw complex landscapes to optimize parameters during gradient descent and scheduling the lr value would help to better convergence.
+
+$$\eta_t = \eta_{min} + \frac{1}{2}(\eta_{max} - \eta_{min})\left(1 + \cos\left(\frac{t}{T}\pi\right)\right)$$
+
+$$\text{where:}$$
+
+$$ \eta_{max} = \alpha = 1e^{-4}$$
+$$ \eta_{min} = 0.0$$
+$$ T = 100$$
 
 ## Loss function
 
