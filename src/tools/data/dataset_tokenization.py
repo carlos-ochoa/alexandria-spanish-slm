@@ -9,7 +9,6 @@ import torch
 from src.tools.data.tokenizer import AlexandriaTokenizer
 from src.utils import ConfigManager
 
-
 cm = ConfigManager("config.yaml")
 tokenized_dataset_path = cm.config["data"]["tokenized_tensors"]
 
@@ -48,7 +47,7 @@ compression_ratio_byte_level /= len(tokenized_dataset)
 word_fertility = 0
 for i, (original_text, tokenized_text) in enumerate(zip(tokenizer_ds, tokenized_dataset)):
     if len(tokenized_text) > 0:
-        word_fertility += len(tokenized_text) / len(original_text.encode("utf-8").split()) 
+        word_fertility += len(tokenized_text) / len(original_text.encode("utf-8").split())
 word_fertility /= len(tokenized_dataset)
 
 total_tokens = 0
@@ -70,7 +69,7 @@ print("Most frequent tokens discovered in unseen data")
 c = Counter()
 for example in tokenized_dataset:
     c.update(example)
-for token, freq  in c.most_common(20):
+for token, freq in c.most_common(20):
     print(freq, token, tokenizer.visualize_tokenization([token]))
 
 tokens = tokenized_dataset[0]
@@ -81,4 +80,3 @@ print(text)
 print(f"Words: {len(text.split())}")
 print(f"Tokens: {len(tokens)}")
 print(f"Decoded tokens: {decoded}")
-

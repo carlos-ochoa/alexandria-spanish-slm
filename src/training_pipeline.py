@@ -1,13 +1,13 @@
 """Defines the training pipeline"""
 
 import comet_ml
-from tqdm import tqdm
 from comet_ml.integration.pytorch import log_model, watch
+from tqdm import tqdm
 
 import torch
 import torch.nn as nn
-from torch.optim.lr_scheduler import CosineAnnealingLR
 from sklearn.model_selection import train_test_split
+from torch.optim.lr_scheduler import CosineAnnealingLR
 from torch.utils.data import DataLoader
 
 from dataset import AlexandriaDataset
@@ -35,8 +35,9 @@ tokenizer = AlexandriaTokenizer(load_tokenizer=True)
 pad_token_id = tokenizer.pad_token_id
 
 device = torch.device(
-    "cuda" if torch.cuda.is_available()
-#     else "mps" if torch.backends.mps.is_available()
+    "cuda"
+    if torch.cuda.is_available()
+    #     else "mps" if torch.backends.mps.is_available()
     else "cpu"
 )
 
@@ -49,13 +50,11 @@ train_data, test_data = train_test_split(dataset, test_size=0.2, train_size=0.8)
 train_data = DataLoader(
     train_data,
     batch_size=batch_size,
-    # shuffle=True,
     collate_fn=create_collate_fn(pad_token_id=pad_token_id),
 )
 test_data = DataLoader(
     test_data,
     batch_size=batch_size,
-    # shuffle=True,
     collate_fn=create_collate_fn(pad_token_id=pad_token_id),
 )
 
@@ -63,7 +62,7 @@ model = AlexandriaModel(config=cm.config)
 
 loss_fn = nn.CrossEntropyLoss(ignore_index=pad_token_id)
 optimizer = torch.optim.AdamW(model.parameters(), lr=1e-4)
-lr_scheduler = CosineAnnealingLR(optimizer, T_max=100)  # Check way of working
+lr_scheduler = CosineAnnealingLR(optimizer, T_max=100)
 
 progress = tqdm(range(len(train_data)))
 
@@ -114,8 +113,4 @@ for step, batch in enumerate(train_data):
 
 log_model(experiment, model, model_name="alexandria_v2")
 
-# Y la elección de hiperparámetros del optimizer
 # Revisar en pizarron cómo el view con los labels termina logrando tensores que encajan
-# Validate perplexity is logged in comet
-# Documentar el sobreajuste del tokenizer ocn las fábulas y cómo vamos a generar otro pequeño dataset para el tokenizer y luego aplicarlo a tiny-coop-es
-# Prueba final con pocos datos para verificar que puedo cargar y hacer inferencia tranquilamente

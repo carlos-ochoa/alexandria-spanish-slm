@@ -1,5 +1,6 @@
-import yaml
 import time
+
+import yaml
 from tqdm import tqdm
 
 import torch
@@ -47,7 +48,9 @@ def create_collate_fn(pad_token_id=258, max_seq_len=256):
     return custom_padding_collate
 
 
-def evaluate(model: AlexandriaModel, test_data: DataLoader, pad_token_id: int, vocab_size: int, device : str):
+def evaluate(
+    model: AlexandriaModel, test_data: DataLoader, pad_token_id: int, vocab_size: int, device: str
+):
     metrics = {}
     loss = 0
     progress = tqdm(range(len(test_data)))
@@ -66,7 +69,12 @@ def evaluate(model: AlexandriaModel, test_data: DataLoader, pad_token_id: int, v
 
 
 def generate_text(
-    model: AlexandriaModel, eval_prompt: str, max_tokens: int, tokenizer: AlexandriaTokenizer, T : float = 1.0, greedy : bool = False
+    model: AlexandriaModel,
+    eval_prompt: str,
+    max_tokens: int,
+    tokenizer: AlexandriaTokenizer,
+    T: float = 1.0,
+    greedy: bool = False,
 ):
     tokenized_prompt = tokenizer.tokenize(eval_prompt)
     with torch.no_grad():
@@ -75,9 +83,9 @@ def generate_text(
             tokenized_prompt = tokenized_prompt.unsqueeze(0)
             input = {"input_ids": tokenized_prompt, "attention_mask": None}
             start_time = time.time()
-            #print(start_time)
+            # print(start_time)
             output = model(input)
-            #print("Time per token (s): ", time.time() - start_time)
+            # print("Time per token (s): ", time.time() - start_time)
             next_token_logits = output[
                 :, -1, :
             ]  # because we want only the logits for the last token

@@ -1,10 +1,11 @@
-import torch
-from src.model import AlexandriaModel
-from src.tools.data.tokenizer import AlexandriaTokenizer
-from src.utils import generate_text, ConfigManager
+from tqdm import tqdm
 
 import pandas as pd
-from tqdm import tqdm
+import torch
+
+from src.model import AlexandriaModel
+from src.tools.data.tokenizer import AlexandriaTokenizer
+from src.utils import ConfigManager, generate_text
 
 cm = ConfigManager("config.yaml")
 version = "v2"
@@ -14,27 +15,19 @@ else:
     tokenizer = AlexandriaTokenizer(load_tokenizer=True, load_path="assets/tokenizer.json")
 model = AlexandriaModel(config=cm.config)
 
-checkpoints = [
-    f"assets/{version}/checkpoint-{step}-{step}.pth" for step in range(0, 3000, 1000) 
-]
+checkpoints = [f"assets/{version}/checkpoint-{step}-{step}.pth" for step in range(0, 3000, 1000)]
 
 checkpoints.append(f"assets/{version}/model-data_comet-torch-model-2500-{version}.pth")
 
-results = {
-    "model" : [],
-    "prompt" : [],
-    "output" : [],
-    "max_tokens" : [],
-    "temperature" : []
-}
+results = {"model": [], "prompt": [], "output": [], "max_tokens": [], "temperature": []}
 
 progress = tqdm(range(len(checkpoints)))
 
 for checkpoint in checkpoints:
     if checkpoint == f"assets/{version}/model-data_comet-torch-model-2500-{version}.pth":
-        model.load_state_dict(torch.load(checkpoint, map_location=torch.device('cpu')))
+        model.load_state_dict(torch.load(checkpoint, map_location=torch.device("cpu")))
     else:
-        check = torch.load(checkpoint, map_location=torch.device('cpu'))["model_state_dict"]
+        check = torch.load(checkpoint, map_location=torch.device("cpu"))["model_state_dict"]
         print(checkpoint)
         model.load_state_dict(check)
 
@@ -44,7 +37,7 @@ for checkpoint in checkpoints:
         "La tor",
         "Carlos ",
         "Azul es el cielo ",
-        "Moraleja: "
+        "Moraleja: ",
     ]
 
     max_tokens = 50
@@ -67,7 +60,7 @@ for checkpoint in checkpoints:
 
 results = pd.DataFrame(results)
 results.to_csv(f"assets/results_{version}.csv")
-#print(tokenizer.visualize_tokenization(tokens))
+# print(tokenizer.visualize_tokenization(tokens))
 
 # Hablemos sobre el tema de los sesgos implícitos, y cómo queda de aprendizaje poder analizar mejor los datos
 # sintéticos o no, con técnicas como NLP para informar mejor su composición

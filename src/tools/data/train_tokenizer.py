@@ -5,7 +5,6 @@ from datasets import load_dataset
 from src.tools.data.tokenizer import AlexandriaTokenizer
 from src.utils import ConfigManager
 
-
 cm = ConfigManager("config.yaml")
 tokenized_dataset_path = cm.config["data"]["tokenized_tensors"]
 
