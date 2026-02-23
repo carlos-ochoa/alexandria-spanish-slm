@@ -208,7 +208,7 @@ __marimo__/
 
 # Custom folders
 /data
-/assets
+/assets/tokenizer_2.json
 
 *.db
 *.lock
