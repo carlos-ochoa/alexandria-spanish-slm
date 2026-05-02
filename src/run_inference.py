@@ -9,13 +9,12 @@ from src.utils import ConfigManager, generate_text
 
 cm = ConfigManager("config.yaml")
 version = "v2"
-if version == "v1":
-    tokenizer = AlexandriaTokenizer(load_tokenizer=True, load_path="assets/tokenizer_good.json")
-else:
-    tokenizer = AlexandriaTokenizer(load_tokenizer=True, load_path="assets/tokenizer.json")
+tokenizer = AlexandriaTokenizer(load_tokenizer=True, load_path=f"assets/{version}/tokenizer.json")
 model = AlexandriaModel(config=cm.config)
 
-checkpoints = [f"assets/{version}/checkpoint-{step}-{step}.pth" for step in range(0, 3000, 1000)]
+# You can load and test different checkpoints by adding their names in this list
+checkpoints = []
+#checkpoints = [f"assets/{version}/checkpoint-{step}-{step}.pth" for step in range(0, 3000, 1000)]
 
 checkpoints.append(f"assets/{version}/model-data_comet-torch-model-2500-{version}.pth")
 
@@ -31,16 +30,12 @@ for checkpoint in checkpoints:
         print(checkpoint)
         model.load_state_dict(check)
 
+    # Modify this list to test different prompts
     prompts = [
-        "Estaban dos personas en ",
-        "El conejo estaba a la orilla del río ",
-        "La tor",
-        "Carlos ",
-        "Azul es el cielo ",
-        "Moraleja: ",
+        "¿Cuál fue el resultado de anoche? ",
     ]
 
-    max_tokens = 50
+    max_tokens = 200
     temperature = 0.5
 
     for prompt in prompts:
@@ -60,8 +55,3 @@ for checkpoint in checkpoints:
 
 results = pd.DataFrame(results)
 results.to_csv(f"assets/results_{version}.csv")
-# print(tokenizer.visualize_tokenization(tokens))
-
-# Hablemos sobre el tema de los sesgos implícitos, y cómo queda de aprendizaje poder analizar mejor los datos
-# sintéticos o no, con técnicas como NLP para informar mejor su composición
-# Agregar una columna con greedy y otra con Temp
