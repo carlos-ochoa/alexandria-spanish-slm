@@ -7,7 +7,7 @@ Alexandria is a decoder-only transformer model for language modeling in Spanish,
 
 My main goal on this project was to learn deeply about language modeling, specially focused on the pre-training phase with a small language model. That's why I decided to implement almost all the main components by hand, as the main goal was understanding all the real challenges behind this kind of tasks.
 
-Creating Alexandria gave me the opportunity to implement the next components, and I'm open sourcing eveything:
+Creating Alexandria gave me the opportunity to implement the next components, and I'm open sourcing everything:
 
 1. A custom BPE tokenizer
 2. A custom synthetic dataset with fables in Spanish: [tiny-coop-es](https://huggingface.co/datasets/hetline/tiny-coop-es)
